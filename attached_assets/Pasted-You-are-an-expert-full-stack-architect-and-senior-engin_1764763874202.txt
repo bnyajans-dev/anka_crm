@@ -1,0 +1,388 @@
+You are an expert full-stack architect and senior engineer.
+
+We already have an **Anka Travel CRM** system with:
+
+- Backend: Node.js + TypeScript + Express + PostgreSQL + ORM
+- Auth: JWT, auth middleware, RBAC for roles: admin, manager, sales
+- Entities & modules:
+  - users, teams
+  - schools
+  - visits
+  - offers
+  - sales
+  - leave_balances, leave_requests
+  - announcements
+  - appointments
+- Basic dashboard summary
+- Admin panel: React + TypeScript + Tailwind, ProtectedRoute, axios with token
+- Role-aware sidebar and pages for all modules above.
+
+Now I want to UPGRADE the system with the following advanced features:
+
+====================================================
+1) OFFER PDF GENERATION (REAL PDF, NOT PLACEHOLDER)
+====================================================
+
+### Backend
+
+Implement real server-side PDF generation for offers:
+
+- Use a reasonable stack (e.g. html-pdf, pdfkit, Puppeteer, or any compatible lib).
+- Create a service that:
+  - Takes an offer + related school + user info
+  - Renders an HTML template with:
+    - Anka Travel logo and contact info (hardcoded for now)
+    - School name, contact person
+    - Tour name
+    - Student_count, teacher_count
+    - price_per_student, total_price, currency
+    - validity date (valid_until)
+    - standard terms & conditions section
+
+- Convert HTML → PDF buffer
+- Save to disk or storage (e.g. /uploads/offers or existing storage service).
+- Update offers.pdf_url with the generated URL/path.
+
+Endpoint:
+
+- POST /api/offers/:id/generate-pdf
+  - Only the owner (sales) or admins/managers can trigger.
+  - Returns { pdfUrl }
+
+### Frontend
+
+In the admin panel:
+
+- On Offer detail/edit page:
+  - Add a “Generate PDF” button.
+  - When clicked, POST to /api/offers/:id/generate-pdf, then:
+    - Show success toast
+    - Display a link/button: “PDF’yi Aç” / “Open PDF” which opens the pdf_url in a new tab.
+
+====================================================
+2) PERFORMANCE & COMMISSION ENGINE
+====================================================
+
+We already have offers, sales, visits. Now:
+
+### Backend
+
+If not present, create tables:
+
+sales_targets
+- id
+- user_id
+- period_type: 'month' | 'year'
+- period_year
+- period_month (nullable for annual)
+- visit_target (int, nullable)
+- offer_target (int, nullable)
+- deal_target (int, nullable)
+- revenue_target (numeric, nullable)
+- created_by_user_id
+- created_at
+
+commission_rules
+- id
+- name
+- level_type: 'global' | 'team' | 'user'
+- team_id (nullable)
+- user_id (nullable)
+- base_rate (numeric)            // e.g. 0.03
+- threshold_revenue (numeric)    // e.g. 100000
+- threshold_bonus_amount (numeric)
+- per_visit_bonus (numeric, nullable)
+- per_deal_bonus (numeric, nullable)
+- is_active (bool)
+- created_at, updated_at
+
+commissions
+- id
+- user_id
+- source_type: 'sale' | 'visit' | 'bonus'
+- source_id (uuid)
+- amount (numeric)
+- currency (string, default 'TRY')
+- date (date)
+- description (text)
+- created_at
+
+Implement a service that for a given user + month:
+
+- Calculates:
+  - visits_count (from visits)
+  - offers_count
+  - deals_count (sales)
+  - revenue_sum (sum of sales.final_revenue_amount)
+  - progress vs targets (if sales_targets exist)
+- Applies commission_rules in order:
+  - Find the most specific rule (user → team → global)
+  - base_rate * revenue_sum
+  - + threshold_bonus_amount if revenue_sum > threshold_revenue
+  - + per_visit_bonus * visits_count
+  - + per_deal_bonus * deals_count
+- Generates commission entries in commissions table (or recalculates on the fly).
+
+Endpoints:
+
+- GET /api/performance/summary?userId=&year=&month=
+  - Admin: can query any user
+  - Manager: only team’s users
+  - Sales: only self (ignore userId if provided)
+- GET /api/performance/team-summary?teamId=&year=&month=
+- GET /api/commissions?userId=&from=&to=
+
+### Frontend (Admin)
+
+Add menu: “Hedef & Performans” and “Komisyonlar”.
+
+Pages:
+
+1) PerformanceUserPage
+   - Route: /performance/user/:id
+   - Shows for selected month/year:
+     - visits vs target (progress bar)
+     - offers vs target
+     - deals vs target
+     - revenue vs target
+   - Charts (using e.g. Recharts or similar):
+     - bar or donut charts for progress
+
+2) MyPerformancePage
+   - Route: /performance/me
+   - For current user (sales), same metrics for current month.
+
+3) CommissionsPage
+   - Route: /commissions
+   - Shows commission entries (filter by user, date range).
+   - For sales: only own.
+   - For manager: team.
+   - For admin: all.
+
+Implement simple create/edit pages for sales_targets and commission_rules for admins.
+
+====================================================
+3) MOBILE UI / PWA FOR FIELD SALES
+====================================================
+
+We want a mobile-friendly UI for sales reps, accessible via browser (PWA-ready).
+
+### Frontend (same React app, different layout)
+
+Create a separate “mobile shell” under routes like `/m/...`.
+
+Key screens for sales:
+
+1) MobileHomePage
+   - Route: /m
+   - Shows:
+     - Today’s appointments
+     - Quick stats (today’s visits, open offers)
+
+2) MobileVisitsPage
+   - Route: /m/visits
+   - List visits of current user (simple list, touch-friendly).
+
+3) MobileNewVisitPage
+   - Route: /m/visits/new
+   - Select school + visit_date + notes + “Start Visit / Check-in” button.
+
+4) MobileOffersPage
+   - Route: /m/offers
+   - List own offers; link to detail.
+
+5) MobileProfilePage
+   - Route: /m/profile
+   - Shows info and simple “MyPerformance summary” and “MyCommissions summary” (using performance endpoints).
+
+Use a minimal, mobile-first layout (full-width, big buttons, bottom navigation bar with icons for Home, Visits, Offers, Profile).
+
+### PWA
+
+- Add basic PWA support:
+  - manifest.json
+  - icons
+  - service worker registration stub
+  (It doesn't have to be perfect, but ready to be turned into a proper PWA.)
+
+====================================================
+4) GPS CHECK-IN FOR VISITS
+====================================================
+
+### Backend
+
+Extend visits table if not already:
+
+- checkin_lat (numeric, nullable)
+- checkin_lng (numeric, nullable)
+- checkin_time (timestamp, nullable)
+
+Endpoints:
+
+- POST /api/visits/:id/checkin
+  - Body: { lat, lng }
+  - Sets checkin_lat, checkin_lng, checkin_time = now
+  - Only the owner (sales) can call this.
+
+### Frontend (Mobile)
+
+On Mobile visit detail or “New Visit” workflow:
+
+- Add a “Check-in” button.
+- On click:
+  - Use browser geolocation (navigator.geolocation.getCurrentPosition)
+  - Send POST /api/visits/:id/checkin with coords
+  - Show success toast.
+- Show the recorded check-in info on the visit detail screen.
+
+====================================================
+5) NOTIFICATIONS / ANNOUNCEMENTS UI UPGRADE
+====================================================
+
+We already have announcements.
+
+### Backend
+
+- Add table: announcement_reads
+  - id
+  - announcement_id
+  - user_id
+  - read_at timestamp
+- When user fetches /api/announcements, we can include info about read/unread.
+- Add endpoint:
+  - POST /api/announcements/:id/mark-read
+
+### Frontend
+
+- In the top bar, add a bell icon with unread count.
+- Clicking opens a dropdown or a page:
+  - List announcements, unread ones highlighted.
+- On open/mark-read, call POST /api/announcements/:id/mark-read.
+
+====================================================
+6) GRAPHICAL DASHBOARD
+====================================================
+
+Use a chart library (e.g. Recharts) to upgrade the dashboard.
+
+Backend:
+- Extend /api/dashboard/summary or add:
+  - /api/dashboard/charts?from=&to=…
+  - Returns:
+    - visits_per_day[]
+    - offers_by_status[]
+    - revenue_per_month[]
+    - top_schools_by_revenue[]
+
+Frontend:
+- On the main Dashboard page:
+  - Line chart: visits per day (last 30 days)
+  - Bar chart: revenue per month (last 6–12 months)
+  - Pie / donut: offers by status
+  - Table: top 5 schools by revenue
+
+Role-aware data:
+- Same RBAC rules as before (admin = all, manager = team, sales = self).
+
+====================================================
+7) FILE UPLOAD (ATTACHMENTS)
+====================================================
+
+### Backend
+
+We have an attachments table or we can create:
+
+attachments
+- id
+- type: enum('photo','document','contract','other')
+- related_type: enum('school','visit','offer','sale')
+- related_id
+- file_url
+- uploaded_by_user_id
+- uploaded_at
+
+Implement:
+
+- Use multer or similar to accept multipart/form-data.
+- Endpoint: POST /api/attachments
+  - Fields: related_type, related_id, type
+  - File: “file”
+  - Returns: attachment record with file_url.
+- Endpoint: GET /api/attachments?related_type=&related_id=
+
+You can assume local storage (e.g. /uploads) but abstract it into a service so we can switch to S3/Supabase in future.
+
+### Frontend
+
+On detail pages for:
+
+- Schools
+- Visits
+- Offers
+
+Add an “Attachments” panel:
+
+- List existing attachments with type and link.
+- Upload button:
+  - Opens file picker
+  - Sends POST /api/attachments with related info
+  - On success, refresh list.
+
+====================================================
+8) AUDIT LOGGING
+====================================================
+
+### Backend
+
+Create table: audit_logs
+- id
+- user_id
+- action (string)
+- entity_type (string; e.g. 'school','visit','offer','sale', etc.)
+- entity_id (uuid)
+- changes (JSON, nullable)
+- created_at (timestamp)
+
+Implement a simple audit service:
+
+- In key controllers (create/update/delete for critical entities),
+  call a logAudit(user, action, entity_type, entity_id, changes).
+
+For example:
+- "CREATE_SCHOOL", "UPDATE_OFFER", "DELETE_VISIT" etc.
+
+No need for every single field diff – just basic info is enough.
+
+### Frontend
+
+Add an admin-only page:
+
+- Route: /audit-logs
+- Table: created_at, user_name, action, entity_type, entity_id
+- Filters: date range, user, entity_type.
+
+====================================================
+9) CALENDAR VIEW FOR APPOINTMENTS
+====================================================
+
+### Frontend
+
+For “Ajanda”:
+
+- In addition to list view, add a calendar view.
+- Implement a simple monthly calendar using any React calendar library or a minimal own implementation.
+- Each day shows number of appointments; clicking a day lists appointments for that day.
+- Toggle between “List view” and “Calendar view”.
+
+====================================================
+GENERAL NOTES
+====================================================
+
+- Keep all code consistent with existing project structure.
+- Use TypeScript everywhere.
+- Respect RBAC on every endpoint and page.
+- Use i18n for new UI texts (TR/EN), but you can stub translations if needed.
+- Focus on getting all features to a functional, production-ready skeleton level.
+- Avoid overcomplication; we can refine style and micro-details later.
+
+Implement all of the above in the current backend and admin frontend codebases.

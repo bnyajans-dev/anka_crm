@@ -107,5 +107,34 @@
     "new_team": "Yeni Takım",
     "name": "Takım Adı",
     "manager": "Yönetici"
+  },
+  "mobile": {
+    "home": "Ana Sayfa",
+    "profile": "Profil",
+    "today_visits": "Bugünkü Ziyaretler",
+    "active_offers": "Aktif Teklifler",
+    "check_in": "Check-in Yap",
+    "location_recorded": "Konum kaydedildi"
+  },
+  "performance": {
+    "title": "Hedef & Performans",
+    "my_performance": "Performansım",
+    "commissions": "Komisyonlar",
+    "visits_target": "Ziyaret Hedefi",
+    "offers_target": "Teklif Hedefi",
+    "deals_target": "Satış Hedefi",
+    "revenue_target": "Ciro Hedefi",
+    "progress": "İlerleme"
+  },
+  "attachments": {
+    "title": "Dosyalar",
+    "upload": "Dosya Yükle",
+    "no_files": "Dosya bulunamadı"
+  },
+  "audit": {
+    "title": "İşlem Günlüğü",
+    "action": "İşlem",
+    "entity": "Kayıt",
+    "changes": "Değişiklikler"
   }
 }

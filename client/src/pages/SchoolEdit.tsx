@@ -12,6 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
+import AttachmentsPanel from '@/components/AttachmentsPanel';
+
 const schoolSchema = z.object({
   name: z.string().min(3, "Name is required"),
   city: z.string().min(2, "City is required"),
@@ -92,7 +94,7 @@ export default function SchoolEdit() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild>
           <Link to="/schools">
@@ -105,110 +107,118 @@ export default function SchoolEdit() {
         </div>
       </div>
 
-      <Card className="border-border/50 shadow-md">
-        <CardHeader>
-          <CardTitle>{t('schools.form_title')}</CardTitle>
-          <CardDescription>Update the details of the school below.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('schools.name')}</FormLabel>
-                    <FormControl>
-                      <Input placeholder="e.g. Atatürk Anadolu Lisesi" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <Card className="border-border/50 shadow-md">
+                <CardHeader>
+                <CardTitle>{t('schools.form_title')}</CardTitle>
+                <CardDescription>Update the details of the school below.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{t('schools.name')}</FormLabel>
+                            <FormControl>
+                            <Input placeholder="e.g. Atatürk Anadolu Lisesi" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('schools.city')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ankara" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="district"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('schools.district')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Çankaya" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('schools.city')}</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Ankara" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        
+                        <FormField
+                        control={form.control}
+                        name="district"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('schools.district')}</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Çankaya" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="contact_person"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('schools.contact_person')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Ahmet Yılmaz" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="contact_phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('schools.contact_phone')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0555 123 45 67" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                        control={form.control}
+                        name="contact_person"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('schools.contact_person')}</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Ahmet Yılmaz" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        
+                        <FormField
+                        control={form.control}
+                        name="contact_phone"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>{t('schools.contact_phone')}</FormLabel>
+                            <FormControl>
+                                <Input placeholder="0555 123 45 67" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <Button variant="outline" type="button" asChild>
-                  <Link to="/schools">{t('common.cancel')}</Link>
-                </Button>
-                <Button type="submit" disabled={form.formState.isSubmitting}>
-                  {form.formState.isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('common.save')}...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      {t('common.save')}
-                    </>
-                  )}
-                </Button>
-              </div>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
+                    <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="outline" type="button" asChild>
+                        <Link to="/schools">{t('common.cancel')}</Link>
+                        </Button>
+                        <Button type="submit" disabled={form.formState.isSubmitting}>
+                        {form.formState.isSubmitting ? (
+                            <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {t('common.save')}...
+                            </>
+                        ) : (
+                            <>
+                            <Save className="mr-2 h-4 w-4" />
+                            {t('common.save')}
+                            </>
+                        )}
+                        </Button>
+                    </div>
+                    </form>
+                </Form>
+                </CardContent>
+            </Card>
+        </div>
+
+        <div>
+             {id && <AttachmentsPanel relatedType="school" relatedId={parseInt(id)} />}
+        </div>
+      </div>
     </div>
   );
 }

@@ -23,6 +23,15 @@ import LeaveRequestsList from "@/pages/Leaves/LeaveRequestsList";
 import AppointmentsList from "@/pages/Appointments/AppointmentsList";
 import UsersList from "@/pages/Users/UsersList";
 import TeamsList from "@/pages/Teams/TeamsList";
+import MyPerformancePage from "@/pages/Performance/MyPerformancePage";
+import CommissionsPage from "@/pages/Performance/CommissionsPage";
+import AuditLogsPage from "@/pages/AuditLogs/AuditLogsPage";
+import MobileHome from "@/pages/Mobile/MobileHome";
+import MobileVisits from "@/pages/Mobile/MobileVisits";
+import MobileNewVisit from "@/pages/Mobile/MobileNewVisit";
+import MobileOffers from "@/pages/Mobile/MobileOffers";
+import MobileProfile from "@/pages/Mobile/MobileProfile";
+import { MobileLayout } from "@/components/layout/MobileLayout";
 import RequireRole from "@/components/RequireRole";
 import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
@@ -92,6 +101,17 @@ function Router() {
       <Route path="/leave-requests" element={<ProtectedRoute><LeaveRequestsList /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsList /></ProtectedRoute>} />
       
+      <Route path="/performance/me" element={<ProtectedRoute><MyPerformancePage /></ProtectedRoute>} />
+      <Route path="/commissions" element={<ProtectedRoute><CommissionsPage /></ProtectedRoute>} />
+      
+      <Route path="/audit-logs" element={
+        <ProtectedRoute>
+          <RequireRole roles={['admin']}>
+            <AuditLogsPage />
+          </RequireRole>
+        </ProtectedRoute>
+      } />
+
       <Route path="/users" element={
         <ProtectedRoute>
           <RequireRole roles={['admin']}>
@@ -107,6 +127,13 @@ function Router() {
           </RequireRole>
         </ProtectedRoute>
       } />
+
+      {/* Mobile Routes */}
+      <Route path="/m" element={<ProtectedRoute><MobileLayout><MobileHome /></MobileLayout></ProtectedRoute>} />
+      <Route path="/m/visits" element={<ProtectedRoute><MobileLayout><MobileVisits /></MobileLayout></ProtectedRoute>} />
+      <Route path="/m/visits/new" element={<ProtectedRoute><MobileLayout><MobileNewVisit /></MobileLayout></ProtectedRoute>} />
+      <Route path="/m/offers" element={<ProtectedRoute><MobileLayout><MobileOffers /></MobileLayout></ProtectedRoute>} />
+      <Route path="/m/profile" element={<ProtectedRoute><MobileLayout><MobileProfile /></MobileLayout></ProtectedRoute>} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

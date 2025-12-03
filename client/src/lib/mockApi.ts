@@ -117,6 +117,50 @@ export interface DashboardSummary {
   upcoming_appointments_count: number;
 }
 
+export interface Attachment {
+  id: number;
+  type: 'photo' | 'document' | 'contract' | 'other';
+  related_type: 'school' | 'visit' | 'offer' | 'sale';
+  related_id: number;
+  file_name: string;
+  file_url: string;
+  uploaded_by_user_id: number;
+  uploaded_at: string;
+}
+
+export interface AuditLog {
+  id: number;
+  user_id: number;
+  user_name?: string;
+  action: string;
+  entity_type: string;
+  entity_id: number;
+  changes?: string; // JSON string
+  created_at: string;
+}
+
+export interface Commission {
+  id: number;
+  user_id: number;
+  source_type: 'sale' | 'visit' | 'bonus';
+  source_id: number;
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+}
+
+export interface PerformanceSummary {
+  visits_count: number;
+  visits_target: number;
+  offers_count: number;
+  offers_target: number;
+  deals_count: number;
+  deals_target: number;
+  revenue_sum: number;
+  revenue_target: number;
+}
+
 // --- MOCK DATA ---
 
 let MOCK_USERS: User[] = [
@@ -161,6 +205,14 @@ let MOCK_ANNOUNCEMENTS: Announcement[] = [
 let MOCK_APPOINTMENTS: Appointment[] = [
   { id: 1, school_id: 2, user_id: 3, type: 'visit', start_date: '2023-10-25T09:00:00', end_date: '2023-10-25T11:00:00', status: 'planned' }
 ] as any;
+
+let MOCK_ATTACHMENTS: Attachment[] = [];
+let MOCK_AUDIT_LOGS: AuditLog[] = [
+  { id: 1, user_id: 1, user_name: 'Admin User', action: 'CREATE_USER', entity_type: 'user', entity_id: 3, created_at: '2023-10-01T10:00:00' }
+];
+let MOCK_COMMISSIONS: Commission[] = [
+  { id: 1, user_id: 3, source_type: 'sale', source_id: 1, amount: 1800, currency: 'TRY', date: '2023-10-18', description: 'Commission for Sale #1' }
+];
 
 // --- HELPERS ---
 
@@ -371,6 +423,76 @@ export const api = {
         total_revenue: Math.floor(MOCK_SALES.reduce((acc, curr) => acc + curr.final_revenue_amount, 0) * multiplier),
         upcoming_appointments_count: Math.floor(MOCK_APPOINTMENTS.length * multiplier)
       };
+    },
+    getCharts: async () => {
+      await delay(500);
+      return {
+        visits_per_day: [
+          { date: '01/10', count: 2 }, { date: '02/10', count: 5 }, { date: '03/10', count: 3 },
+          { date: '04/10', count: 7 }, { date: '05/10', count: 4 }, { date: '06/10', count: 6 }
+        ],
+        revenue_per_month: [
+          { month: 'Jun', amount: 50000 }, { month: 'Jul', amount: 75000 }, { month: 'Aug', amount: 40000 },
+          { month: 'Sep', amount: 90000 }, { month: 'Oct', amount: 120000 }
+        ],
+        offers_by_status: [
+          { name: 'Draft', value: 5 }, { name: 'Sent', value: 10 }, { name: 'Accepted', value: 3 }, { name: 'Rejected', value: 1 }
+        ],
+        top_schools: [
+          { name: 'Atatürk Anadolu', revenue: 60000 }, { name: 'Fen Lisesi', revenue: 45000 }, { name: 'Kolej A', revenue: 30000 }
+        ]
+      };
+    }
+  },
+  attachments: {
+    list: async (relatedType: string, relatedId: number): Promise<Attachment[]> => {
+      await delay(300);
+      return MOCK_ATTACHMENTS.filter(a => a.related_type === relatedType && a.related_id === relatedId);
+    },
+    upload: async (data: any): Promise<Attachment> => {
+      await delay(800);
+      const newAtt: Attachment = {
+        id: Math.random(),
+        ...data,
+        file_url: 'https://via.placeholder.com/150', // Dummy URL
+        uploaded_at: new Date().toISOString(),
+        uploaded_by_user_id: 1
+      };
+      MOCK_ATTACHMENTS.push(newAtt);
+      return newAtt;
+    }
+  },
+  auditLogs: {
+    list: async (): Promise<AuditLog[]> => {
+      await delay(400);
+      return [...MOCK_AUDIT_LOGS];
+    }
+  },
+  performance: {
+    getSummary: async (userId?: number): Promise<PerformanceSummary> => {
+      await delay(500);
+      return {
+        visits_count: 12, visits_target: 20,
+        offers_count: 5, offers_target: 10,
+        deals_count: 2, deals_target: 5,
+        revenue_sum: 120000, revenue_target: 200000
+      };
+    }
+  },
+  commissions: {
+    list: async (): Promise<Commission[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      if (currentUser?.role === 'sales') {
+        return MOCK_COMMISSIONS.filter(c => c.user_id === currentUser.id);
+      }
+      return [...MOCK_COMMISSIONS];
+    }
+  },
+  pdf: {
+    generate: async (offerId: number): Promise<string> => {
+      await delay(1500);
+      return "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"; // Dummy PDF
     }
   }
 };

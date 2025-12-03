@@ -107,5 +107,34 @@
     "new_team": "New Team",
     "name": "Team Name",
     "manager": "Manager"
+  },
+  "mobile": {
+    "home": "Home",
+    "profile": "Profile",
+    "today_visits": "Today's Visits",
+    "active_offers": "Active Offers",
+    "check_in": "Check-in",
+    "location_recorded": "Location recorded"
+  },
+  "performance": {
+    "title": "Targets & Performance",
+    "my_performance": "My Performance",
+    "commissions": "Commissions",
+    "visits_target": "Visits Target",
+    "offers_target": "Offers Target",
+    "deals_target": "Deals Target",
+    "revenue_target": "Revenue Target",
+    "progress": "Progress"
+  },
+  "attachments": {
+    "title": "Attachments",
+    "upload": "Upload File",
+    "no_files": "No files found"
+  },
+  "audit": {
+    "title": "Audit Logs",
+    "action": "Action",
+    "entity": "Entity",
+    "changes": "Changes"
   }
 }

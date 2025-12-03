@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth';
+import NotificationsPopover from '../NotificationsPopover';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -48,9 +49,7 @@ export function Header() {
         </DropdownMenu>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
-          <Bell className="h-4 w-4 text-muted-foreground" />
-        </Button>
+        <NotificationsPopover />
 
         <div className="w-px h-6 bg-border mx-1" />
 

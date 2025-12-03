@@ -15,7 +15,10 @@ import {
   Megaphone,
   Clock,
   Users,
-  Shield
+  Shield,
+  LineChart,
+  FileSearch,
+  Smartphone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -75,6 +78,30 @@ export function Sidebar() {
       title: t('common.appointments'),
       icon: Clock,
       href: '/appointments',
+      roles: ['admin', 'manager', 'sales']
+    },
+    {
+      title: t('performance.title'),
+      icon: LineChart,
+      href: '/performance/me',
+      roles: ['sales', 'manager', 'admin']
+    },
+    {
+      title: t('performance.commissions'),
+      icon: CreditCard,
+      href: '/commissions',
+      roles: ['sales', 'manager', 'admin']
+    },
+    {
+      title: t('audit.title'),
+      icon: FileSearch,
+      href: '/audit-logs',
+      roles: ['admin']
+    },
+    {
+      title: 'Mobile Preview',
+      icon: Smartphone,
+      href: '/m',
       roles: ['admin', 'manager', 'sales']
     },
     {
