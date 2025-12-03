@@ -48,7 +48,7 @@ export default function TargetsList() {
   useEffect(() => {
     const load = async () => {
       const uData = await api.users.list();
-      setUsers(uData);
+      setUsers(uData.filter(u => u.role === 'sales')); // Only show sales users
       setLoading(false);
     };
     load();
@@ -82,7 +82,7 @@ export default function TargetsList() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0">
         {/* Left Column: User List */}
         <Card className="md:col-span-1 flex flex-col overflow-hidden">
-            <CardHeader className="pb-3 border-b"><CardTitle className="text-base">Personel Listesi</CardTitle></CardHeader>
+            <CardHeader className="pb-3 border-b"><CardTitle className="text-base">Satış Personeli</CardTitle></CardHeader>
             <div className="p-2">
                 <div className="relative">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />

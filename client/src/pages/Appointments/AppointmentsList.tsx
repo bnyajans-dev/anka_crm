@@ -12,8 +12,6 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-
 import { Badge } from '@/components/ui/badge';
 
 export default function AppointmentsList() {
@@ -86,8 +84,8 @@ export default function AppointmentsList() {
                 <CardContent className="h-[600px] flex items-center justify-center border-2 border-dashed rounded-md bg-muted/10">
                     <div className="text-center">
                         <CalendarIcon className="h-16 w-16 mx-auto text-muted-foreground mb-4 opacity-20" />
-                        <p className="text-muted-foreground">Calendar view implementation requires a heavy calendar library.</p>
-                        <p className="text-sm text-muted-foreground mt-2">For this prototype, please use the List view.</p>
+                        <p className="text-muted-foreground">Calendar view is not implemented in this mockup.</p>
+                        <p className="text-sm text-muted-foreground mt-2">Please switch to List view.</p>
                     </div>
                 </CardContent>
             </Card>

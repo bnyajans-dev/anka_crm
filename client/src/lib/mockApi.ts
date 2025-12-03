@@ -113,10 +113,11 @@ export interface Announcement {
   id: number;
   title: string;
   message: string;
-  type: 'info' | 'warning' | 'success' | 'target_info';
+  type: 'info' | 'warning' | 'success' | 'target_info' | 'campaign' | 'announcement';
   audience_type: 'all' | 'role' | 'user' | 'team';
   audience_id?: number | string; // role name or id
   created_at: string;
+  expires_at?: string;
   is_read?: boolean;
 }
 
@@ -126,7 +127,7 @@ export interface Appointment {
   school_name?: string;
   user_id: number;
   user_name?: string;
-  type: 'visit' | 'call' | 'online_meeting';
+  type: 'visit' | 'call' | 'online_meeting' | 'sale_followup';
   start_datetime: string;
   end_datetime: string;
   status: 'planned' | 'done' | 'cancelled';
@@ -134,7 +135,44 @@ export interface Appointment {
   is_auto_created?: boolean;
 }
 
-export interface DashboardSummary {
+export interface AuditLog {
+  id: number;
+  user_id: number;
+  user_name: string;
+  action: string;
+  entity_type: string;
+  entity_id: number;
+  changes?: string;
+  created_at: string;
+}
+
+export interface SalesTarget {
+  id: number;
+  user_id: number;
+  user_name?: string;
+  period_type: 'month' | 'year';
+  period_year: number;
+  period_month?: number;
+  visit_target: number;
+  offer_target: number;
+  deal_target: number;
+  revenue_target: number;
+  created_by_user_id: number;
+}
+
+export interface Commission {
+  id: number;
+  user_id: number;
+  source_type: 'sale' | 'bonus';
+  source_id: number;
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+}
+
+// ... (Existing interfaces)
+
   total_schools: number;
   total_visits: number;
   total_offers: number;

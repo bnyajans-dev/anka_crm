@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/lib/auth';
 import { api, DashboardSummary } from '@/lib/mockApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { School, Briefcase, CheckCircle, CreditCard, Calendar } from 'lucide-react';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { School, Briefcase, CheckCircle, CreditCard, Calendar, Clock } from 'lucide-react';
+import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [charts, setCharts] = useState<any>(null);
 
@@ -24,6 +26,8 @@ export default function Dashboard() {
 
   if (!summary || !charts) return <div className="p-6">Loading...</div>;
 
+  const isSales = user?.role === 'sales';
+
   const stats = [
     { title: t('dashboard_metrics.total_schools'), value: summary.total_schools, icon: School, color: 'text-blue-500' },
     { title: t('dashboard_metrics.total_visits'), value: summary.total_visits, icon: Briefcase, color: 'text-orange-500' },
@@ -37,7 +41,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <h1 className="text-3xl font-bold tracking-tight">{t('common.dashboard')}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{isSales ? 'Kişisel Dashboard' : 'Yönetici Paneli'}</h1>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {stats.map((stat, i) => (
@@ -98,6 +102,31 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
           </CardContent>
+        </Card>
+      </div>
+
+      {/* Dashboard Extra Panel */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="col-span-1">
+            <CardHeader><CardTitle className="text-base">Bugünün Özeti</CardTitle></CardHeader>
+            <CardContent>
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-md">
+                        <Clock className="text-blue-500 h-5 w-5" />
+                        <div>
+                            <div className="text-sm font-medium">10:00 - Toplantı</div>
+                            <div className="text-xs text-muted-foreground">Atatürk Anadolu Lisesi</div>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-md">
+                        <Calendar className="text-orange-500 h-5 w-5" />
+                        <div>
+                            <div className="text-sm font-medium">Teklif Takibi</div>
+                            <div className="text-xs text-muted-foreground">3 gün önce gönderildi</div>
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
         </Card>
       </div>
     </div>

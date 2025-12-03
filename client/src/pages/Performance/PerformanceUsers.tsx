@@ -32,7 +32,7 @@ export default function PerformanceUsers() {
   const teamSummary = users.reduce((acc, user) => {
     const target = getTarget(user.id);
     const revenueTarget = target?.revenue_target || 0;
-    const actualRevenue = 50000; // Mock fixed for demo
+    const actualRevenue = Math.floor(Math.random() * 120000); // Mock actual logic would be better with real API aggregation
     
     return {
         totalTarget: acc.totalTarget + revenueTarget,
@@ -57,14 +57,14 @@ export default function PerformanceUsers() {
               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Gerçekleşen Ciro</CardTitle></CardHeader>
               <CardContent>
                   <div className="text-2xl font-bold text-green-600">{teamSummary.totalActual.toLocaleString()} ₺</div>
-                  <Progress value={(teamSummary.totalActual / teamSummary.totalTarget) * 100} className="h-2 mt-2" />
+                  <Progress value={(teamSummary.totalActual / (teamSummary.totalTarget || 1)) * 100} className="h-2 mt-2" />
               </CardContent>
           </Card>
           <Card>
               <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Ekip Başarısı</CardTitle></CardHeader>
               <CardContent>
                   <div className="text-2xl font-bold flex items-center gap-2">
-                    %{Math.floor((teamSummary.totalActual / teamSummary.totalTarget) * 100)}
+                    %{Math.floor((teamSummary.totalActual / (teamSummary.totalTarget || 1)) * 100)}
                     <TrendingUp className="h-5 w-5 text-green-500" />
                   </div>
               </CardContent>

@@ -1,0 +1,134 @@
+Create a full frontend-only React + TypeScript + Vite + Tailwind + ShadCN UI application named “ANKA TRAVEL SAHA CRM”. Use a single mockApi.ts file for all data, fully in-memory arrays, no backend. The app must include complete RBAC, dashboards, charts, region-based map reports, person-based performance targets, tour definitions, school city/district selection, automatic offer-to-sale conversion, appointment scheduling, email sending, file attachments, audit logs, announcements, visits, offers, sales, schools, users, teams, commissions, settings. All UI must be Turkish. Everything below MUST be fully implemented.
+
+ROLES: system_admin, admin, manager, sales.
+system_admin = full access to all modules, settings, users, teams, tours, targets, everything.
+admin = manage users, teams, targets, tours, schools, announcements.
+manager = sees only users in their own team and team-level visits/offers/sales.
+sales = sees only their own data.
+All UI components, buttons, menus, and routes MUST hide/show according to RBAC.
+All mockApi responses MUST also enforce RBAC (sales only own items, manager team only, admin all, system_admin overrides all).
+
+MODULES TO BUILD:
+Dashboard, Schools, Visits, Offers, Sales, Appointments, Users, Teams, Announcements, Tours, Performance Targets, My Performance, Commissions, Attachments, Audit Logs, Region Map Report, Settings, Login Page.
+
+SCHOOL MANAGEMENT:
+School form fields: name, city (select), district (select dependent on city), contact_person, contact_phone, region (optional), latitude, longitude.
+Cities select: “İstanbul” MUST always appear at the top.
+DISTRICTS_BY_CITY mapping must include:
+İstanbul: Fatih, Kadıköy, Üsküdar, Kartal, Pendik, Beşiktaş, Bakırköy, Zeytinburnu
+Ankara: Çankaya, Keçiören, Yenimahalle
+İzmir: Konak, Bornova, Karşıyaka
+District dropdown MUST update dynamically after city selection.
+
+TOUR DEFINITIONS:
+Define entity TourDefinition { id, name, description, default_price_per_student, default_currency, default_duration_days, region }.
+Create page /settings/tours with full CRUD.
+In Offer form, selecting a tour MUST auto-fill price_per_student and currency with tour defaults but still allow manual editing.
+
+OFFER MODULE:
+Offer fields: school_id, user_id, tour_name, student_count, teacher_count, price_per_student, total_price (auto = student_count * price_per_student), currency, valid_until, contact_name, contact_email, status (draft, sent, negotiation, accepted, rejected), last_sent_at, last_sent_status.
+Sales can edit only their own offers; cannot edit accepted offers.
+Manager/admin can edit offers unless accepted.
+When an offer becomes “accepted”:
+
+create Sale record,
+
+create Appointment automatically for next day,
+
+push Announcement (type: target_info),
+
+append Audit Log entry,
+
+update Dashboard metrics.
+Add “Teklifi Mail Gönder” button: calling api.offers.sendEmail sets last_sent_at & last_sent_status.
+
+USER ENTITY EXTENSIONS:
+Add to User type: region?: string; districts?: string[];
+System admin & admin can set region + multi-select districts for each sales user.
+Map report MUST use these districts for filtering.
+
+REGION MAP REPORT /reports/map:
+Allowed roles: system_admin, admin, manager.
+Use React-Leaflet + OpenStreetMap.
+Filters: date range, data type (Visits / Offers / Sales), city, region, sales person.
+Schools appear as pins using latitude/longitude.
+Marker color or size must reflect selected data type (visits count, offer count, sales revenue).
+Popup shows: school name, city, district, total visits/offers/sales in date range, total revenue, and link to school detail.
+If a sales user is selected → only display schools located in that user’s responsible districts (user.districts).
+Highlight these districts visually.
+Add a summary panel: total schools, total visits, total offers, total sales, total revenue.
+
+PERFORMANCE TARGETS (Kişi Bazlı):
+Targets ALWAYS per user. Entity SalesTarget { id, user_id, period_type, period_year, period_month, visit_target, offer_target, deal_target, revenue_target }.
+Admin/manager page: table with each user and progress bars for visits/offers/deals/revenue. Clicking a user opens target form.
+Sales user sees only their own performance on /performance/my with simplified dashboard.
+
+VISITS: CRUD: school_id, user_id, visit_date, status, contact_person, notes, next_step. RBAC: sales only own; manager team; admin all.
+
+SALES: Created automatically when offer accepted. Store revenue, currency, school, and offer references. Display payment status.
+
+APPOINTMENTS: Calendar + list view. Automatically created when offer accepted (+1 day). RBAC: sales = own; manager = team; admin = all.
+
+ANNOUNCEMENTS: Announcement { id, title, message, type (announcement, campaign, target_info, warning), audience_type (all, role, team, user), created_at, expires_at }. Create/edit/delete for admin & system_admin.
+
+ATTACHMENTS: Upload photos/documents for school/visit/offer/sale. Mock upload returns placeholder URL.
+
+AUDIT LOGS: Log all important actions (offer accepted, email sent, user created, appointment created). /audit page lists logs (system_admin/admin only).
+
+COMMISSIONS: List commissions per user (sales see only their own).
+
+DASHBOARD — ROLE-BASED VISUAL SHOW:
+Dashboard MUST change completely depending on role.
+
+For manager/admin/system_admin → show a visual, powerful “Executive Dashboard”:
+
+Top row: big KPI cards (this month revenue, number of sales, active offers, today’s visits, target achievement).
+
+Middle section: Team Leaderboard table: each row = salesperson with columns: region, visits vs target, offers vs target, deals vs target, revenue vs target, progress bar.
+
+Right panel: “Today Summary”: today’s appointments, expiring offers (valid_until <3 days), users far behind target.
+
+Bottom: charts: revenue per month (bar), visits per day (line), offers by status (pie), mini map with top districts.
+
+For sales → simplified personal dashboard:
+
+My revenue, my visits, my offers, my conversion, my appointments today.
+
+Small “AI Sales Coach” box: show simple advice depending on whether user is ahead/behind target.
+
+Hide all team-level data from sales role.
+
+MOCK API:
+All CRUD functions must be implemented.
+RBAC filtering must be fully implemented.
+Email send, file upload, PDF generate must return dummy success.
+No network requests allowed.
+
+UI/UX:
+Must be fully Turkish.
+Fully responsive & mobile-first.
+Left sidebar navigation + topbar user menu + light/dark mode toggle.
+Tables become cards on mobile.
+Map full width on mobile.
+ShadCN UI for components.
+
+ROUTING STRUCTURE:
+/src/pages/dashboard
+/src/pages/schools
+/src/pages/visits
+/src/pages/offers
+/src/pages/sales
+/src/pages/appointments
+/src/pages/users
+/src/pages/teams
+/src/pages/performance
+/src/pages/performance/my
+/src/pages/reports/map
+/src/pages/settings/tours
+/src/pages/attachments
+/src/pages/announcements
+/src/pages/audit
+/src/pages/auth/login
+
+FINAL GOAL:
+Generate a COMPLETE working frontend CRM with all pages, all RBAC, all forms, all tables, all dashboards, all charts, all maps, all automations, all settings. EVERYTHING required above MUST be built in one pass. Do not skip anything. All UI must be Turkish. This is the final and complete specification.
