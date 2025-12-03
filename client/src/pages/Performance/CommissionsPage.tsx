@@ -3,8 +3,10 @@ import { api, Commission } from '@/lib/mockApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 
 export default function CommissionsPage() {
+  const { t } = useTranslation();
   const [commissions, setCommissions] = useState<Commission[]>([]);
 
   useEffect(() => {
@@ -16,10 +18,10 @@ export default function CommissionsPage() {
   return (
     <div className="space-y-6 animate-in fade-in">
       <div className="flex justify-between items-end">
-        <h1 className="text-3xl font-bold tracking-tight">Commissions</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Primlerim</h1>
         <Card className="bg-green-50 border-green-200">
           <CardContent className="p-4 py-2">
-            <span className="text-xs text-green-600 font-medium uppercase">Total Earnings</span>
+            <span className="text-xs text-green-600 font-medium uppercase">Toplam Kazanç</span>
             <div className="text-2xl font-bold text-green-700">{totalCommission.toLocaleString()} ₺</div>
           </CardContent>
         </Card>
@@ -30,10 +32,10 @@ export default function CommissionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Tarih</TableHead>
+                <TableHead>Kaynak</TableHead>
+                <TableHead>Açıklama</TableHead>
+                <TableHead className="text-right">Tutar</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

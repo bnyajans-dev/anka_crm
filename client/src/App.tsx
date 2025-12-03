@@ -37,6 +37,11 @@ import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
 import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
+import TargetsList from "@/pages/Performance/TargetsList";
+import PerformanceUsers from "@/pages/Performance/PerformanceUsers";
+import OfferTemplateSettings from "@/pages/Settings/OfferTemplateSettings";
+import SchoolDetail from "@/pages/SchoolDetail";
+
 // Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -82,11 +87,8 @@ function Router() {
         </ProtectedRoute>
       } />
 
-      <Route path="/schools/:id/edit" element={
-        <ProtectedRoute>
-          <SchoolEdit />
-        </ProtectedRoute>
-      } />
+      <Route path="/schools/:id" element={<ProtectedRoute><SchoolDetail /></ProtectedRoute>} />
+      <Route path="/schools/:id/edit" element={<ProtectedRoute><SchoolEdit /></ProtectedRoute>} />
 
       <Route path="/visits" element={<ProtectedRoute><VisitsList /></ProtectedRoute>} />
       <Route path="/visits/new" element={<ProtectedRoute><VisitCreate /></ProtectedRoute>} />
@@ -103,8 +105,12 @@ function Router() {
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsList /></ProtectedRoute>} />
       
       <Route path="/performance/me" element={<ProtectedRoute><MyPerformancePage /></ProtectedRoute>} />
+      <Route path="/performance/targets" element={<ProtectedRoute><RequireRole roles={['admin', 'manager']}><TargetsList /></RequireRole></ProtectedRoute>} />
+      <Route path="/performance/users" element={<ProtectedRoute><RequireRole roles={['admin', 'manager']}><PerformanceUsers /></RequireRole></ProtectedRoute>} />
       <Route path="/commissions" element={<ProtectedRoute><CommissionsPage /></ProtectedRoute>} />
       
+      <Route path="/settings/offer-template" element={<ProtectedRoute><RequireRole roles={['admin']}><OfferTemplateSettings /></RequireRole></ProtectedRoute>} />
+
       <Route path="/audit-logs" element={
         <ProtectedRoute>
           <RequireRole roles={['admin']}>

@@ -1,0 +1,598 @@
+You are an expert full-stack architect and senior engineer.
+
+We have an existing **Anka Travel CRM** with:
+
+- Backend:
+  - Node.js + TypeScript + Express
+  - PostgreSQL + ORM (e.g. Prisma/Drizzle)
+  - JWT auth, RBAC (roles: 'admin' | 'manager' | 'sales')
+  - Modules: users, teams, schools, visits, offers, sales, appointments,
+    leave_requests, announcements, dashboard, performance/commissions (basic)
+
+- Frontend:
+  - React + TypeScript + Tailwind
+  - Admin panel (desktop)
+  - Some mobile/PWA routes (/m/...)
+  - ProtectedRoute, RequireRole, AuthContext, axios instance with token
+
+We previously started:
+- Target & commission logic
+- Offer→Sale→Appointment workflow
+- Advanced CRM ideas (AI helpers, risk scores, etc.)
+
+Now we want to **upgrade** the system with:
+
+1) Proper TARGET & EARNINGS SYSTEM (RBAC enforced)  
+2) Offer workflow: “ACCEPTED → create Sale + calendar item”  
+3) Offer edit rules: everyone can edit, BUT with date/owner/status restrictions  
+4) **NEW:** Offer form has contact email, and can send email + PDF from UI  
+5) **NEW:** Offer template / form design screen (admin can design email & PDF texts)  
+6) Stubs & basic structure for advanced CRM/AI features:
+   - School 360 view
+   - Reminders / risk alerts
+   - Kanban pipeline board
+   - Import/Export
+   - School tags/segments
+   - AI helpers (notes → offers, risk score, forecast, etc.)
+
+Implement all below in a clean, integrated way.
+
+=====================================================
+PART 1 — TARGET & EARNINGS (RBAC)
+=====================================================
+
+Ensure a table:
+
+sales_targets
+- id (uuid)
+- user_id (FK users)
+- period_type: 'month' | 'year'
+- period_year: int
+- period_month: int (nullable for 'year')
+- visit_target: int | null
+- offer_target: int | null
+- deal_target: int | null
+- revenue_target: numeric | null
+- created_by_user_id: uuid FK users
+- created_at, updated_at
+
+Endpoints (JWT protected):
+
+1) POST /api/performance/targets
+   Body:
+   {
+     userId,
+     periodType,
+     periodYear,
+     periodMonth?,
+     visitTarget?,
+     offerTarget?,
+     dealTarget?,
+     revenueTarget?
+   }
+
+   RBAC:
+   - admin: any user
+   - manager: only users in their team
+   - sales: forbidden
+
+2) PUT /api/performance/targets/:id
+   Same RBAC as above.
+
+3) GET /api/performance/targets?userId=&year=&month=
+   - admin: any
+   - manager: only team users
+   - sales: forbidden
+
+4) GET /api/performance/my-targets?year=&month=
+   - uses req.user.id, ignores any userId query
+   - returns:
+     {
+       success: true,
+       data: {
+         target: { visitTarget, offerTarget, dealTarget, revenueTarget, periodType, periodYear, periodMonth },
+         progress: { visitsCount, offersCount, dealsCount, revenueSum },
+         percentages: { visitsPercent, offersPercent, dealsPercent, revenuePercent }
+       }
+     }
+   - compute progress from visits/offers/sales for that user & period.
+
+Commissions:
+
+- GET /api/commissions?userId=&from=&to=
+  - admin: any user
+  - manager: only team users
+  - sales: forbidden
+
+- GET /api/commissions/my?from=&to=
+  - always current user only
+
+Enforce RBAC strictly in backend.
+
+Frontend:
+
+- For role 'sales':
+  - Show:
+    - "Performansım" → /me/performance (calls /my-targets)
+    - "Primlerim" → /me/commissions (calls /commissions/my)
+  - No global target mgmt.
+
+- For admin/manager:
+  - Show:
+    - "Hedef Yönetimi" → /performance/targets
+    - "Performans" → /performance/users
+    - "Komisyonlar" → /commissions
+
+Implement pages:
+
+- /me/performance:
+  - For current user.
+  - Month/year selector.
+  - 4 cards (visits/offers/deals/revenue vs target) with progress bars.
+
+- /me/commissions:
+  - List own commissions with date, amount, description, filters.
+
+- /performance/targets:
+  - Admin: select any user.
+  - Manager: only team users.
+  - See + edit targets per month.
+
+- /performance/users:
+  - Overview table: user, team, and percentages vs targets.
+
+=====================================================
+PART 2 — OFFER WORKFLOW:
+"ACCEPTED → AUTO SALE + APPOINTMENT"
+=====================================================
+
+We already have offers and sales.
+
+Modify PUT /api/offers/:id:
+
+- Load existing offer.
+- RBAC for editing (see Part 3).
+- Detect transition:
+  - If previous status != 'accepted' AND new status === 'accepted':
+    - Create sales record:
+
+      sales:
+      - offer_id
+      - closed_by_user_id = req.user.id
+      - closed_date = now
+      - final_revenue_amount = offer.total_price
+      - currency = offer.currency
+      - payment_status = 'pending'
+      - created_at, updated_at
+
+    - Create appointment record:
+
+      appointments:
+      - user_id = offer.user_id
+      - school_id = offer.school_id
+      - type = 'sale_followup'
+      - start_datetime = now + 1 day
+      - end_datetime = start + 1 hour
+      - status = 'planned'
+      - notes = "Otomatik: Teklif kabul edildi, satış oluşturuldu."
+
+    - Write an audit_log:
+      - action: "OFFER_ACCEPTED_TO_SALE"
+      - entity_type: "offer"
+      - entity_id: offer.id
+      - changes: JSON with { sale_id, appointment_id }
+
+- For users with role 'sales':
+  - Once accepted, they cannot later change status again (lock).
+
+Response should include:
+{
+  success: true,
+  data: {
+    offer: ...,
+    sale: ... if created,
+    appointment: ... if created
+  }
+}
+
+Frontend:
+
+- On OfferEditPage:
+  - If status is changed to "accepted", show a confirm modal:
+    "Teklif kabul edilecek. Satış kaydı ve ajanda randevusu otomatik oluşturulacak."
+  - After save, show toast success and optionally show link:
+    - "Satışı Gör" (/sales/:id) and "Ajandayı Gör" (/appointments?user=current&today=1).
+
+=====================================================
+PART 3 — OFFER EDIT RULES (OWNER, PAST, STATUS LOCK)
+=====================================================
+
+Backend (PUT/DELETE offers):
+
+- Determine:
+  - isPast = valid_until < today (server date) if valid_until not null.
+  - isStatusLocked = status in ('accepted','rejected').
+
+Rules:
+
+- For role 'sales':
+  - Can only edit/delete if:
+    - offer.user_id === req.user.id
+    - NOT isPast
+    - NOT isStatusLocked
+  - Otherwise return 403 with appropriate error code.
+
+- For role 'manager':
+  - Can only edit/delete offers for users in their team.
+  - Cannot edit/delete past offers or accepted/rejected offers.
+
+- For role 'admin':
+  - Can edit/delete any offer.
+  - If editing/deleting past/accepted offers, log in audit_logs with action like
+    "ADMIN_EDIT_PAST_OFFER" or "ADMIN_DELETE_ACCEPTED_OFFER".
+
+Optionally, set a field in response DTO:
+- canEdit: boolean
+- canDelete: boolean
+
+Frontend:
+
+- Offers list:
+  - Show Edit/Delete buttons only if canEdit/canDelete (or computed with role+owner+dates).
+  - Show lock icon + tooltip "Geçmiş/Kilitli teklif".
+
+- Offer Edit page:
+  - If locked, show read-only mode and message:
+    "Bu teklif geçmiş veya kilitli olduğu için üzerinde değişiklik yapamazsınız."
+
+=====================================================
+PART 4 — NEW: OFFER CONTACT EMAIL + SEND OFFER BY EMAIL
+=====================================================
+
+We want:
+
+- In the offer form, the user enters the **contact email** of the person at the school.
+- From the offer screen, they can click “Teklifi Gönder” and an email is sent
+  with the offer PDF (either attached or as a link).
+
+### BACKEND: DB & ENDPOINT
+
+Extend offers table with:
+
+- contact_name (string, nullable)
+- contact_email (string, nullable)
+- last_sent_at (timestamp, nullable)
+- last_sent_status (string, nullable)   // e.g. 'success' | 'error'
+- last_sent_error (text, nullable)
+
+Implement email sending service:
+
+- Use nodemailer (or any other Node mail library).
+- Config via environment variables:
+  - SMTP_HOST
+  - SMTP_PORT
+  - SMTP_USER
+  - SMTP_PASS
+  - FROM_EMAIL, FROM_NAME
+
+Reuse the existing PDF generation feature:
+- If offer.pdf_url does not exist yet:
+  - Generate the PDF first using existing HTML→PDF logic.
+- Decide:
+  - Either attach PDF as a file, OR include pdf_url in email body.
+  - For now: attach PDF if possible, and also include link in body.
+
+Endpoint:
+
+POST /api/offers/:id/send-email
+
+- RBAC:
+  - sales: can send only if offer.user_id === req.user.id
+  - manager: only team’s offers
+  - admin: any offer
+
+- Validation:
+  - contact_email must be present and valid.
+  - If not, return 400 with message.
+
+- Behavior:
+  - Load offer + school + owner (user).
+  - Load **offer template** (see Part 5).
+  - Render email subject/body using template with placeholders:
+    - {{school_name}}
+    - {{contact_name}}
+    - {{tour_name}}
+    - {{student_count}}
+    - {{teacher_count}}
+    - {{total_price}}
+    - {{currency}}
+    - {{valid_until}}
+    - {{salesperson_name}}
+  - Send email.
+  - Update last_sent_at, last_sent_status ('success' or 'error'), last_sent_error if any.
+  - Log audit_log: action "OFFER_EMAIL_SENT".
+
+- Response:
+  {
+    success: true/false,
+    message,
+    data?: { lastSentAt, lastSentStatus }
+  }
+
+### FRONTEND: OFFER FORM & BUTTON
+
+Offer Create/Edit form:
+
+- Add fields:
+  - "Teklif Verilen Kişi Adı" → contact_name
+  - "E-posta Adresi" → contact_email
+- Make contact_email required for sending email, not necessarily for saving draft.
+
+Offer Detail/Edit UI:
+
+- Add a button: "Teklifi Gönder (E-posta)"
+  - Disabled if contact_email is empty.
+  - On click:
+    - Show confirm modal:
+      "Bu adrese teklif e-postası gönderilecek: {{contact_email}}"
+    - Call POST /api/offers/:id/send-email.
+    - Show toast success or error based on response.
+    - Display last_sent_at somewhere on the screen.
+
+=====================================================
+PART 5 — NEW: OFFER TEMPLATE / FORM DESIGN SCREEN
+=====================================================
+
+We want an admin screen where we can edit:
+
+- Email subject/body templates
+- PDF header/footer texts
+- Placeholders like {{school_name}}, {{tour_name}}, {{total_price}}, etc.
+
+### BACKEND
+
+Create a table:
+
+offer_templates
+- id (uuid)
+- name (string)              // e.g. "Varsayılan Teklif Şablonu"
+- is_default (boolean)
+- email_subject_template (text)
+- email_body_template (text)
+- pdf_header_template (text)
+- pdf_footer_template (text)
+- created_by_user_id
+- created_at, updated_at
+
+Initially, seed one default template.
+
+Placeholders we support (document in code comments):
+
+- {{school_name}}
+- {{contact_name}}
+- {{tour_name}}
+- {{student_count}}
+- {{teacher_count}}
+- {{price_per_student}}
+- {{total_price}}
+- {{currency}}
+- {{valid_until}}
+- {{salesperson_name}}
+- {{today}}
+
+Implement:
+
+- GET /api/offer-templates (admin only)
+- GET /api/offer-templates/:id
+- POST /api/offer-templates (admin only)
+- PUT /api/offer-templates/:id (admin only)
+- PATCH /api/offer-templates/:id/set-default (admin only)
+
+Create a small util function to render templates by replacing {{...}} with offer/school/user data.
+
+When sending email or generating PDF:
+- Use the **default** template (is_default = true).
+- Render strings:
+  - email_subject
+  - email_body
+  - pdf_header
+  - pdf_footer
+
+### FRONTEND – TEMPLATE DESIGN SCREEN
+
+Add menu item for admin only:
+
+- "Teklif Şablonu" → /settings/offer-template
+
+Page /settings/offer-template:
+
+- If only one template (we can start with single default model), just edit that.
+- Show:
+  - Text input: "E-posta Konu Şablonu"
+  - Textarea or rich text editor: "E-posta Gövdesi"
+  - Textarea: "PDF Üst Metni"
+  - Textarea: "PDF Alt Metni"
+  - A small help panel listing available placeholders and examples.
+
+- Save button → calls PUT /api/offer-templates/:id.
+
+When editing:
+- Use controlled inputs.
+- Show preview of how email might look with some sample data.
+
+=====================================================
+PART 6 — SCHOOL 360 VIEW (TIMELINE)
+=====================================================
+
+We want a **360° view** for each school.
+
+Backend:
+
+- Create endpoint:
+  GET /api/schools/:id/summary
+
+Returns:
+- school info
+- visits for that school (last N visits)
+- offers for that school
+- sales for that school
+- upcoming appointments for that school
+- attachments for that school (if attachments module exists)
+- maybe last_sent emails (from offers)
+
+Frontend:
+
+- At /schools/:id, add a "360 Görünüm" / "Geçmiş & İlişki" tab:
+  - Timeline style list:
+    - Visit entries
+    - Offer created / offer accepted
+    - Sales created
+    - Files uploaded
+  - Possibly color-coded by type.
+
+=====================================================
+PART 7 — REMINDERS & RISK ALERTS (BASIC)
+=====================================================
+
+Implement a simple service (no cron required yet, but structure-ready):
+
+Backend:
+
+- Endpoint GET /api/alerts/my
+  - For current user (sales or manager/admin).
+  - Returns:
+    - Offers nearing valid_until (e.g. < 3 days)
+    - Schools with no visits in last X days (e.g. 90 days)
+    - Targets far behind (e.g. under 50% with time > 50% of period)
+
+Frontend:
+
+- Show a small bell or “Uyarılar” section on dashboard:
+  - “3 teklifin bitmek üzere”
+  - “Ziyaret yapılmamış 5 okulun var”
+  - “Bu ay hedefinin gerisindesin”
+
+=====================================================
+PART 8 — KANBAN PIPELINE VIEW (OFFERS)
+=====================================================
+
+Frontend only (backend uses existing offers endpoints):
+
+- Add page: /offers/kanban
+- Columns:
+  - 'draft', 'sent', 'negotiation', 'accepted', 'rejected'
+- Each offer is a card.
+- Implement drag-and-drop:
+  - On drop to a column, call PUT /api/offers/:id with new status.
+  - Respect same RBAC/locking rules (cannot drag locked/past offers).
+
+=====================================================
+PART 9 — IMPORT / EXPORT (BASIC)
+=====================================================
+
+Backend:
+
+- For now, implement export for:
+
+  - GET /api/export/schools (admin/manager)
+    - returns CSV of schools.
+  - GET /api/export/offers (admin/manager)
+    - returns CSV with key offer fields.
+
+Frontend:
+
+- Add simple buttons:
+  - "Okulları Dışa Aktar" (CSV)
+  - "Teklifleri Dışa Aktar" (CSV)
+
+(Import can be added later, create stubs if desired.)
+
+=====================================================
+PART 10 — TAGS & SEGMENTS FOR SCHOOLS
+=====================================================
+
+Tables:
+
+tags
+- id
+- name
+- color
+- created_at
+
+school_tags
+- id
+- school_id
+- tag_id
+
+Endpoints:
+
+- GET/POST/PUT/DELETE /api/tags (admin/manager)
+- POST /api/schools/:id/tags (assign tags)
+- GET /api/schools/:id/tags
+
+Frontend:
+
+- In school detail:
+  - Show assigned tags as colored chips.
+  - Allow admin/manager to add/remove tags.
+- In schools list:
+  - Filter by tag(s).
+
+=====================================================
+PART 11 — AI HOOKS (STUBS ONLY, READY FOR OPENAI/GPT, ETC.)
+=====================================================
+
+We don’t fully implement AI here, but we prepare structure:
+
+Backend:
+
+- Create service files like:
+  - src/services/aiNotesToOffer.ts
+  - src/services/aiRiskScore.ts
+  - src/services/aiForecast.ts
+  - src/services/aiSalesCoach.ts
+
+- Create endpoints (protected, RBAC as appropriate), for example:
+
+  - POST /api/ai/notes-to-offer
+    Body: { plainTextNotes, schoolId?, userId? }
+    → For now, return a mock suggestion (TODO comment to call real AI).
+
+  - GET /api/ai/risk-score?schoolId=
+    → Return { score: number, label: 'low'|'medium'|'high' } (mock).
+
+  - GET /api/ai/forecast?userId=&month=&year=
+    → Return { probabilityToHitTarget: number, commentary: string } (mock).
+
+  - GET /api/ai/sales-coach/me
+    → For current user, return suggestions text.
+
+Frontend:
+
+- Add small buttons/sections:
+  - On visit detail: “AI’den Teklif Öner” (calls /ai/notes-to-offer).
+  - On school 360: show risk score.
+  - On "Performansım" page: show AI coach text.
+
+Implement them with placeholder data and comment where real AI integration will go.
+
+=====================================================
+GENERAL REQUIREMENTS
+=====================================================
+
+- Keep everything in TypeScript.
+- Use existing auth & RBAC helpers.
+- Use consistent API response format: { success, data, message? }
+- Frontend:
+  - Use existing axios instance and toast/loading systems.
+  - Follow current layout & design conventions.
+- When adding new routes, wrap with ProtectedRoute and RequireRole where needed.
+
+After implementing all above, the system should support:
+
+- Full target & earnings visibility per role.
+- Offer lifecycle including auto-sale + calendar.
+- Strong rules on who can edit which offer.
+- Sending offers by email with customizable templates.
+- Rich school history view, alerts, kanban pipeline, export, tags.
+- Basic AI integration points ready for future real AI calls.

@@ -78,6 +78,21 @@ export interface Offer {
   currency: string;
   valid_until?: string;
   status: 'draft' | 'sent' | 'negotiation' | 'accepted' | 'rejected';
+  contact_name?: string;
+  contact_email?: string;
+  last_sent_at?: string;
+  last_sent_status?: 'success' | 'error';
+  last_sent_error?: string;
+}
+
+export interface OfferTemplate {
+  id: number;
+  name: string;
+  is_default: boolean;
+  email_subject_template: string;
+  email_body_template: string;
+  pdf_header_template: string;
+  pdf_footer_template: string;
 }
 
 export interface Sale {
@@ -183,6 +198,14 @@ export interface PerformanceSummary {
   revenue_target: number;
 }
 
+export interface SchoolSummary extends School {
+  visits: Visit[];
+  offers: Offer[];
+  sales: Sale[];
+  appointments: Appointment[];
+  attachments: Attachment[];
+}
+
 // --- MOCK DATA ---
 
 let MOCK_USERS: User[] = [
@@ -209,7 +232,19 @@ let MOCK_VISITS: Visit[] = [
 ];
 
 let MOCK_OFFERS: Offer[] = [
-  { id: 1, school_id: 1, user_id: 3, tour_name: 'Ankara-Çanakkale Turu', student_count: 40, teacher_count: 2, price_per_student: 1500, total_price: 60000, currency: 'TRY', status: 'sent' },
+  { id: 1, school_id: 1, user_id: 3, tour_name: 'Ankara-Çanakkale Turu', student_count: 40, teacher_count: 2, price_per_student: 1500, total_price: 60000, currency: 'TRY', status: 'sent', contact_name: 'Ahmet Yılmaz', contact_email: 'ahmet@okul.com' },
+];
+
+let MOCK_OFFER_TEMPLATES: OfferTemplate[] = [
+  {
+    id: 1,
+    name: 'Varsayılan Teklif Şablonu',
+    is_default: true,
+    email_subject_template: '{{school_name}} için {{tour_name}} Teklifi',
+    email_body_template: 'Sayın {{contact_name}},\n\n{{tour_name}} için hazırladığımız teklif ektedir.\n\nSaygılarımla,\n{{salesperson_name}}',
+    pdf_header_template: 'Anka Travel - Özel Okul Gezileri',
+    pdf_footer_template: 'Bu teklif {{valid_until}} tarihine kadar geçerlidir.'
+  }
 ];
 
 let MOCK_SALES: Sale[] = [
@@ -339,7 +374,24 @@ export const api = {
     getById: async (id: number): Promise<School> => { await delay(200); return MOCK_SCHOOLS.find(s => s.id === id)!; },
     create: async (data: any) => { await delay(400); MOCK_SCHOOLS.push({ ...data, id: Math.random() }); return data; },
     update: async (id: number, data: any) => { await delay(400); return data; }, 
-    delete: async (id: number) => { await delay(400); MOCK_SCHOOLS = MOCK_SCHOOLS.filter(s => s.id !== id); }
+    delete: async (id: number) => { await delay(400); MOCK_SCHOOLS = MOCK_SCHOOLS.filter(s => s.id !== id); },
+    getSummary: async (id: number): Promise<SchoolSummary> => {
+      await delay(500);
+      const school = MOCK_SCHOOLS.find(s => s.id === id);
+      if (!school) throw new Error("School not found");
+      
+      return {
+        ...school,
+        visits: MOCK_VISITS.filter(v => v.school_id === id),
+        offers: MOCK_OFFERS.filter(o => o.school_id === id),
+        sales: MOCK_SALES.filter(s => {
+           const offer = MOCK_OFFERS.find(o => o.id === s.offer_id);
+           return offer?.school_id === id;
+        }),
+        appointments: MOCK_APPOINTMENTS.filter(a => a.school_id === id),
+        attachments: MOCK_ATTACHMENTS.filter(a => a.related_type === 'school' && a.related_id === id)
+      };
+    }
   },
   visits: {
     list: async (): Promise<Visit[]> => { 
@@ -377,6 +429,25 @@ export const api = {
       await delay(300);
       const offerIndex = MOCK_OFFERS.findIndex(o => o.id === id);
       if (offerIndex === -1) throw new Error("Offer not found");
+
+      const currentUser = getCurrentUser();
+      const offer = MOCK_OFFERS[offerIndex];
+
+      // Check RBAC for update
+      if (currentUser) {
+         const isOwner = offer.user_id === currentUser.id;
+         const isPast = offer.valid_until ? new Date(offer.valid_until) < new Date() : false;
+         const isLocked = ['accepted', 'rejected'].includes(offer.status);
+
+         if (currentUser.role === 'sales') {
+            if (!isOwner) throw new Error("Permission denied: Not owner");
+            if (isPast) throw new Error("Permission denied: Offer expired");
+            if (isLocked) throw new Error("Permission denied: Offer is locked");
+         } else if (currentUser.role === 'manager') {
+            // Manager logic (simplified for mock)
+            if (isPast || isLocked) throw new Error("Permission denied: Offer expired or locked");
+         }
+      }
 
       const oldStatus = MOCK_OFFERS[offerIndex].status;
       const newStatus = data.status;
@@ -439,8 +510,38 @@ export const api = {
       }
       return MOCK_OFFERS[offerIndex];
     },
-    delete: async (id: number) => { await delay(300); MOCK_OFFERS = MOCK_OFFERS.filter(o => o.id !== id); }
+    delete: async (id: number) => { await delay(300); MOCK_OFFERS = MOCK_OFFERS.filter(o => o.id !== id); },
+    sendEmail: async (id: number, emailData: any) => {
+        await delay(1000);
+        const offerIndex = MOCK_OFFERS.findIndex(o => o.id === id);
+        if (offerIndex === -1) throw new Error("Offer not found");
+        
+        MOCK_OFFERS[offerIndex].last_sent_at = new Date().toISOString();
+        MOCK_OFFERS[offerIndex].last_sent_status = 'success';
+        
+        MOCK_AUDIT_LOGS.push({
+            id: Math.random(),
+            user_id: 1, // Mock user
+            user_name: 'Current User',
+            action: 'OFFER_EMAIL_SENT',
+            entity_type: 'offer',
+            entity_id: id,
+            created_at: new Date().toISOString()
+        });
+        
+        return { success: true };
+    }
   },
+  offerTemplates: {
+    list: async (): Promise<OfferTemplate[]> => { await delay(300); return [...MOCK_OFFER_TEMPLATES]; },
+    getById: async (id: number) => { await delay(200); return MOCK_OFFER_TEMPLATES.find(t => t.id === id); },
+    update: async (id: number, data: any) => {
+        await delay(300);
+        const idx = MOCK_OFFER_TEMPLATES.findIndex(t => t.id === id);
+        if (idx !== -1) MOCK_OFFER_TEMPLATES[idx] = { ...MOCK_OFFER_TEMPLATES[idx], ...data };
+    }
+  },
+  targets: {
   targets: {
     list: async (userId?: number, year?: number, month?: number): Promise<SalesTarget[]> => {
       await delay(300);
@@ -473,6 +574,11 @@ export const api = {
         const newTarget = { ...data, id: Math.random(), created_by_user_id: 1 };
         MOCK_SALES_TARGETS.push(newTarget);
         return newTarget;
+    },
+    update: async (id: number, data: any) => {
+        await delay(300);
+        const idx = MOCK_SALES_TARGETS.findIndex(t => t.id === id);
+        if (idx !== -1) MOCK_SALES_TARGETS[idx] = { ...MOCK_SALES_TARGETS[idx], ...data };
     }
   },
   sales: {

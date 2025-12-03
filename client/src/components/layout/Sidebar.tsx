@@ -80,11 +80,24 @@ export function Sidebar() {
       href: '/appointments',
       roles: ['admin', 'manager', 'sales']
     },
+    // Target & Performance Section
+    {
+      title: 'Hedef Yönetimi',
+      icon: LineChart,
+      href: '/performance/targets',
+      roles: ['admin', 'manager']
+    },
     {
       title: t('performance.title'),
       icon: LineChart,
       href: '/performance/me',
-      roles: ['sales', 'manager', 'admin']
+      roles: ['sales']
+    },
+    {
+      title: 'Performans Özeti',
+      icon: Users,
+      href: '/performance/users',
+      roles: ['admin', 'manager']
     },
     {
       title: t('performance.commissions'),
@@ -96,6 +109,13 @@ export function Sidebar() {
       title: t('audit.title'),
       icon: FileSearch,
       href: '/audit-logs',
+      roles: ['admin']
+    },
+    // Admin Settings
+    {
+      title: 'Teklif Şablonu',
+      icon: FileText,
+      href: '/settings/offer-template',
       roles: ['admin']
     },
     {
