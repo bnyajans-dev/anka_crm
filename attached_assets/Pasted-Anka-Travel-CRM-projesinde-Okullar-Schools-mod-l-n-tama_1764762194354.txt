@@ -1,0 +1,91 @@
+Anka Travel CRM projesinde "Okullar (Schools)" modülünü tamamen bitirmek istiyorum.
+
+Lütfen hem BACKEND hem FRONTEND tarafını kapsayan aşağıdaki geliştirmeleri yap:
+
+=====================================================
+ BACKEND (Node.js + TS + Express + ORM)
+=====================================================
+
+Aşağıdaki endpoint'leri eksiksiz şekilde ekle ve var olan yapıya entegre et:
+
+1) GET /api/schools/:id
+   - getSchoolById adında controller fonksiyonu yaz.
+   - Geçersiz id’de 404 döndür.
+
+2) PUT /api/schools/:id
+   - updateSchool fonksiyonunu yaz.
+   - "name" alanı zorunlu olsun.
+   - Ek alanlar: city, district, address, contact_person, contact_phone
+   - Başarılı güncellemede güncel veriyi döndür.
+
+3) DELETE /api/schools/:id
+   - deleteSchool fonksiyonunu yaz.
+   - Başarılı silmede { success: true } döndür.
+
+Routing:
+- Tüm bu rotaları src/routes/schoolRoutes.ts içine ekle.
+- ENDPOINTLER auth middleware ile korunmalı (JWT zorunlu).
+
+ORM:
+- schools tablosunda şu kolonların olduğundan emin ol:
+  id (uuid, primary key)
+  name (string)
+  city (string)
+  district (string)
+  address (text)
+  contact_person (string)
+  contact_phone (string)
+  created_at, updated_at (timestamp)
+
+=====================================================
+ FRONTEND (React + TS + Tailwind + i18n)
+=====================================================
+
+Tamamlanacaklar:
+
+1) Okul Düzenleme Sayfası
+- /schools/:id/edit rotasını oluştur.
+- src/pages/Schools/EditSchoolPage.tsx dosyası oluştur.
+- Sayfa açıldığında backend'den GET /api/schools/:id isteği atıp formu doldur.
+- Kullanıcı düzenleme yapıp Kaydet'e basınca PUT /api/schools/:id endpoint'ine gönder.
+- Başarılı işlem sonrası /schools sayfasına yönlendir.
+- Form alanları:
+  name (zorunlu)
+  city
+  district
+  address (textarea)
+  contact_person
+  contact_phone
+
+2) Okul Silme Fonksiyonu
+- SchoolsListPage.tsx içinde her satırdaki "..." menüsüne:
+  • Düzenle
+  • Sil
+  seçeneklerini ekle.
+- “Sil” tıklanınca Tailwind ile modern bir onay modali aç.
+- Onaylanırsa DELETE /api/schools/:id isteği gönder, ardından listeyi yenile.
+
+3) UI / UX geliştirmeleri
+- Başarılı işlemlerde toast bildirimi göster.
+- Hatalarda kırmızı toast göster.
+- Tüm metinler i18n üzerinden gelsin.
+  (tr.json ve en.json’a gerekli alanları ekle.)
+
+4) ProtectedRoute kontrolü
+- Okul düzenleme ve listeleme sayfaları ProtectedRoute içinde olsun.
+- Eğer token yoksa otomatik login sayfasına yönlendir.
+
+5) Axios instance
+- Tüm isteklerin Authorization: Bearer <token> şeklinde token ile gitmesine dikkat et.
+
+=====================================================
+ GENEL
+=====================================================
+
+- Backend ve frontend kodlarını mevcut projelere doğru klasör yapısıyla ekle.
+- Eksik dosyaları otomatik oluştur.
+- Var olan kodla çakışma olmasın, entegre şekilde düzenle.
+- Üretilecek kod tamamen TypeScript uyumlu olsun.
+- Geliştirmelerin sonunda çalışır bir CRUD modülü hedefliyoruz.
+
+Bu talimatlara göre tüm düzenlemeleri yap.

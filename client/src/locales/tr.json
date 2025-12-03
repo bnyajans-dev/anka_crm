@@ -10,7 +10,13 @@
     "delete": "Sil",
     "edit": "Düzenle",
     "search": "Ara...",
-    "welcome": "Tekrar Hoşgeldiniz"
+    "welcome": "Tekrar Hoşgeldiniz",
+    "confirm_delete": "Silmeyi Onayla",
+    "delete_description": "Bu okulu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "yes_delete": "Evet, Sil",
+    "no_cancel": "Hayır, İptal",
+    "success": "Başarılı",
+    "error": "Hata"
   },
   "auth": {
     "email": "E-posta Adresi",
@@ -22,6 +28,7 @@
   "schools": {
     "title": "Okul Listesi",
     "new_school": "Yeni Okul Ekle",
+    "edit_school": "Okulu Düzenle",
     "name": "Okul Adı",
     "city": "Şehir",
     "district": "İlçe",
@@ -29,7 +36,10 @@
     "contact_phone": "İletişim Telefonu",
     "actions": "İşlemler",
     "success_add": "Okul başarıyla eklendi",
+    "success_update": "Okul başarıyla güncellendi",
+    "success_delete": "Okul başarıyla silindi",
     "form_title": "Okul Bilgileri",
-    "form_subtitle": "Lütfen okul detaylarını giriniz"
+    "form_subtitle": "Lütfen okul detaylarını giriniz",
+    "loading": "Yükleniyor..."
   }
 }

@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Search, MoreHorizontal, Loader2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Plus, Search, MoreHorizontal, Loader2, Pencil, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { api, School } from '@/lib/mockApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Table, 
   TableBody, 
@@ -19,27 +20,61 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 
 export default function SchoolList() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [deleteId, setDeleteId] = useState<number | null>(null);
+
+  const fetchSchools = async () => {
+    try {
+      const data = await api.schools.list();
+      setSchools(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchSchools = async () => {
-      try {
-        const data = await api.schools.list();
-        setSchools(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchSchools();
   }, []);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await api.schools.delete(deleteId);
+      toast({
+        title: t('schools.success_delete'),
+        description: t('schools.success_delete'),
+      });
+      fetchSchools();
+    } catch (error) {
+      toast({
+        title: t('common.error'),
+        description: "Failed to delete school",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteId(null);
+    }
+  };
 
   const filteredSchools = schools.filter(school => 
     school.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -93,7 +128,7 @@ export default function SchoolList() {
                     <TableCell colSpan={6} className="h-24 text-center">
                       <div className="flex justify-center items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Loading...
+                        {t('schools.loading')}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -120,8 +155,17 @@ export default function SchoolList() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>{t('common.edit')}</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">{t('common.delete')}</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate(`/schools/${school.id}/edit`)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              {t('common.edit')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => setDeleteId(school.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {t('common.delete')}
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -133,6 +177,26 @@ export default function SchoolList() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('common.confirm_delete')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('common.delete_description')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.no_cancel')}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {t('common.yes_delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

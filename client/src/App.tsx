@@ -9,6 +9,7 @@ import './lib/i18n'; // Initialize i18n
 import Login from "@/pages/Login";
 import SchoolList from "@/pages/SchoolList";
 import SchoolForm from "@/pages/SchoolForm";
+import SchoolEdit from "@/pages/SchoolEdit";
 import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
 
@@ -45,6 +46,12 @@ function Router() {
       <Route path="/schools/new" element={
         <ProtectedRoute>
           <SchoolForm />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/schools/:id/edit" element={
+        <ProtectedRoute>
+          <SchoolEdit />
         </ProtectedRoute>
       } />
       

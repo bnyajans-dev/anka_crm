@@ -10,7 +10,13 @@
     "delete": "Delete",
     "edit": "Edit",
     "search": "Search...",
-    "welcome": "Welcome Back"
+    "welcome": "Welcome Back",
+    "confirm_delete": "Confirm Delete",
+    "delete_description": "Are you sure you want to delete this school? This action cannot be undone.",
+    "yes_delete": "Yes, Delete",
+    "no_cancel": "No, Cancel",
+    "success": "Success",
+    "error": "Error"
   },
   "auth": {
     "email": "Email Address",
@@ -22,6 +28,7 @@
   "schools": {
     "title": "Schools List",
     "new_school": "Add New School",
+    "edit_school": "Edit School",
     "name": "School Name",
     "city": "City",
     "district": "District",
@@ -29,7 +36,10 @@
     "contact_phone": "Contact Phone",
     "actions": "Actions",
     "success_add": "School successfully added",
+    "success_update": "School successfully updated",
+    "success_delete": "School successfully deleted",
     "form_title": "School Information",
-    "form_subtitle": "Please enter the school details"
+    "form_subtitle": "Please enter the school details",
+    "loading": "Loading..."
   }
 }

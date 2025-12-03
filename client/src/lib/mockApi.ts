@@ -51,11 +51,29 @@ export const api = {
       await delay(500);
       return [...MOCK_SCHOOLS];
     },
+    getById: async (id: number): Promise<School> => {
+      await delay(400);
+      const school = MOCK_SCHOOLS.find(s => s.id === id);
+      if (!school) throw new Error('School not found');
+      return school;
+    },
     create: async (school: Omit<School, 'id'>): Promise<School> => {
       await delay(600);
       const newSchool = { ...school, id: MOCK_SCHOOLS.length + 1 };
       MOCK_SCHOOLS = [...MOCK_SCHOOLS, newSchool];
       return newSchool;
+    },
+    update: async (id: number, data: Partial<School>): Promise<School> => {
+      await delay(600);
+      const index = MOCK_SCHOOLS.findIndex(s => s.id === id);
+      if (index === -1) throw new Error('School not found');
+      
+      MOCK_SCHOOLS[index] = { ...MOCK_SCHOOLS[index], ...data };
+      return MOCK_SCHOOLS[index];
+    },
+    delete: async (id: number): Promise<void> => {
+      await delay(600);
+      MOCK_SCHOOLS = MOCK_SCHOOLS.filter(s => s.id !== id);
     }
   }
 };
