@@ -115,7 +115,7 @@ export interface Announcement {
   message: string;
   type: 'info' | 'warning' | 'success' | 'target_info' | 'campaign' | 'announcement';
   audience_type: 'all' | 'role' | 'user' | 'team';
-  audience_id?: number | string; // role name or id
+  audience_id?: number | string;
   created_at: string;
   expires_at?: string;
   is_read?: boolean;
@@ -171,8 +171,7 @@ export interface Commission {
   description: string;
 }
 
-// ... (Existing interfaces)
-
+export interface DashboardSummary {
   total_schools: number;
   total_visits: number;
   total_offers: number;
@@ -192,31 +191,6 @@ export interface Attachment {
   uploaded_by_user_id: number;
 }
 
-export interface AuditLog {
-  id: number;
-  user_id: number;
-  user_name: string;
-  action: string;
-  entity_type: string;
-  entity_id: number;
-  changes?: string;
-  created_at: string;
-}
-
-export interface SalesTarget {
-  id: number;
-  user_id: number;
-  user_name?: string;
-  period_type: 'month' | 'year';
-  period_year: number;
-  period_month?: number;
-  visit_target: number;
-  offer_target: number;
-  deal_target: number;
-  revenue_target: number;
-  created_by_user_id: number;
-}
-
 export interface PerformanceSummary {
   visits_count: number;
   visits_target: number;
@@ -226,17 +200,6 @@ export interface PerformanceSummary {
   deals_target: number;
   revenue_sum: number;
   revenue_target: number;
-}
-
-export interface Commission {
-  id: number;
-  user_id: number;
-  source_type: 'sale' | 'bonus';
-  source_id: number;
-  amount: number;
-  currency: string;
-  date: string;
-  description: string;
 }
 
 export interface SchoolSummary extends School {
@@ -287,57 +250,55 @@ let MOCK_OFFER_TEMPLATES: OfferTemplate[] = [
     email_subject_template: '{{school_name}} için {{tour_name}} Teklifi',
     email_body_template: 'Sayın {{contact_name}},\n\n{{tour_name}} için hazırladığımız teklif ektedir.\n\nSaygılarımla,\n{{salesperson_name}}',
     pdf_header_template: 'Anka Travel - Özel Okul Gezileri',
-    pdf_footer_template: 'Bu teklif {{valid_until}} tarihine kadar geçerlidir.'
-  }
+    pdf_footer_template: 'Bu teklif {{valid_until}} tarihine kadar geçerlidir.',
+  },
 ];
 
 let MOCK_SALES: Sale[] = [
-  { id: 1, offer_id: 1, closed_by_user_id: 3, closed_date: '2023-10-18', final_revenue_amount: 60000, currency: 'TRY', payment_status: 'paid', created_from_offer: true }
+  { id: 1, offer_id: 1, closed_by_user_id: 3, closed_date: '2023-10-18', final_revenue_amount: 60000, currency: 'TRY', payment_status: 'paid', created_from_offer: true },
 ];
 
 let MOCK_LEAVES: LeaveRequest[] = [
-  { id: 1, user_id: 3, type: 'annual', start_date: '2023-11-01', end_date: '2023-11-05', days_count: 5, status: 'approved', reason: 'Vacation' }
+  { id: 1, user_id: 3, type: 'annual', start_date: '2023-11-01', end_date: '2023-11-05', days_count: 5, status: 'approved', reason: 'Vacation' },
 ];
 
 let MOCK_ANNOUNCEMENTS: Announcement[] = [
-  { id: 1, title: 'Yeni Sezon Hedefleri', message: 'Ekim ayı hedefleri sisteme girilmiştir.', type: 'info', audience_type: 'all', created_at: '2023-10-01' }
+  { id: 1, title: 'Yeni Sezon Hedefleri', message: 'Ekim ayı hedefleri sisteme girilmiştir.', type: 'info', audience_type: 'all', created_at: '2023-10-01' },
 ];
 
 let MOCK_APPOINTMENTS: Appointment[] = [
-  { id: 1, school_id: 1, user_id: 3, type: 'call', start_datetime: '2023-10-25T10:00:00', end_datetime: '2023-10-25T10:30:00', status: 'planned', notes: 'Follow up call' }
+  { id: 1, school_id: 1, user_id: 3, type: 'call', start_datetime: '2023-10-25T10:00:00', end_datetime: '2023-10-25T10:30:00', status: 'planned', notes: 'Follow up call' },
 ];
 
 let MOCK_ATTACHMENTS: Attachment[] = [];
 
 let MOCK_AUDIT_LOGS: AuditLog[] = [
-  { id: 1, user_id: 1, user_name: 'Admin User', action: 'CREATE_USER', entity_type: 'user', entity_id: 3, created_at: '2023-10-01T10:00:00' }
+  { id: 1, user_id: 1, user_name: 'Admin User', action: 'CREATE_USER', entity_type: 'user', entity_id: 3, created_at: '2023-10-01T10:00:00' },
 ];
 
 let MOCK_COMMISSIONS: Commission[] = [
-  { id: 1, user_id: 3, source_type: 'sale', source_id: 1, amount: 1800, currency: 'TRY', date: '2023-10-18', description: 'Commission for Sale #1' }
+  { id: 1, user_id: 3, source_type: 'sale', source_id: 1, amount: 1800, currency: 'TRY', date: '2023-10-18', description: 'Commission for Sale #1' },
 ];
 
 let MOCK_SALES_TARGETS: SalesTarget[] = [
-  { id: 1, user_id: 3, period_type: 'month', period_year: 2023, period_month: 10, visit_target: 20, offer_target: 10, deal_target: 5, revenue_target: 100000, created_by_user_id: 1 }
+  { id: 1, user_id: 3, period_type: 'month', period_year: 2023, period_month: 10, visit_target: 20, offer_target: 10, deal_target: 5, revenue_target: 100000, created_by_user_id: 1 },
 ];
-
 
 // --- HELPERS ---
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Retrieve current user from localStorage (for mock RBAC)
 const getCurrentUser = (): User | null => {
   try {
     const userStr = localStorage.getItem('anka_user');
     return userStr ? JSON.parse(userStr) : null;
-  } catch (e) {
+  } catch {
     return null;
   }
 };
 
-const filterByRole = <T extends { user_id?: number; closed_by_user_id?: number; team_id?: number }>(
-  data: T[], 
+const filterByRole = <T extends { user_id?: number; closed_by_user_id?: number }>(
+  data: T[],
   user: User,
   userField: keyof T = 'user_id' as keyof T
 ): T[] => {
@@ -346,7 +307,6 @@ const filterByRole = <T extends { user_id?: number; closed_by_user_id?: number; 
     return data.filter(item => item[userField] === user.id);
   }
   if (user.role === 'manager') {
-    // Find users in manager's team
     const teamUserIds = MOCK_USERS.filter(u => u.team_id === user.team_id).map(u => u.id);
     return data.filter(item => teamUserIds.includes(item[userField] as number));
   }
@@ -359,219 +319,209 @@ export const api = {
   users: {
     list: async (): Promise<User[]> => { await delay(300); return [...MOCK_USERS]; },
     getById: async (id: number): Promise<User> => { await delay(200); return MOCK_USERS.find(u => u.id === id)!; },
-    create: async (data: any) => { await delay(300); MOCK_USERS.push({ ...data, id: Math.random() }); return data; },
-    update: async (id: number, data: any) => { 
-      await delay(300); 
+    create: async (data: any) => { await delay(300); const user = { ...data, id: Math.random() }; MOCK_USERS.push(user); return user; },
+    update: async (id: number, data: any) => {
+      await delay(300);
       const idx = MOCK_USERS.findIndex(u => u.id === id);
-      if (idx !== -1) MOCK_USERS[idx] = { ...MOCK_USERS[idx], ...data };
-      return data; 
-    }, 
+      if (idx !== -1) {
+        MOCK_USERS[idx] = { ...MOCK_USERS[idx], ...data };
+        return MOCK_USERS[idx];
+      }
+      throw new Error('User not found');
+    },
     delete: async (id: number) => { await delay(300); MOCK_USERS = MOCK_USERS.filter(u => u.id !== id); },
   },
   teams: {
-    list: async (): Promise<any[]> => { await delay(300); return [{ id: 1, name: 'Sales Team A', manager_id: 2, manager_name: 'Manager User' }, { id: 2, name: 'Sales Team B', manager_id: 0, manager_name: 'None' }]; },
-    getById: async (id: number) => { await delay(200); return { id, name: 'Sales Team A', manager_id: 2 }; }, // Mock
+    list: async (): Promise<any[]> => {
+      await delay(300);
+      return [
+        { id: 1, name: 'Sales Team A', manager_id: 2, manager_name: 'Manager User' },
+        { id: 2, name: 'Sales Team B', manager_id: 0, manager_name: 'None' },
+      ];
+    },
+    getById: async (id: number) => { await delay(200); return { id, name: 'Sales Team A', manager_id: 2 }; },
     create: async (data: any) => { await delay(300); return data; },
     update: async (id: number, data: any) => { await delay(300); return data; },
-    delete: async (id: number) => { await delay(300); }
+    delete: async (id: number) => { await delay(300); },
   },
   tours: {
     list: async (): Promise<TourDefinition[]> => { await delay(300); return [...MOCK_TOURS]; },
     getById: async (id: number): Promise<TourDefinition> => { await delay(200); return MOCK_TOURS.find(t => t.id === id)!; },
-    create: async (data: any) => { await delay(300); MOCK_TOURS.push({ ...data, id: Math.random() }); return data; },
-    update: async (id: number, data: any) => { 
-      await delay(300); 
+    create: async (data: any) => { await delay(300); const tour = { ...data, id: Math.random() }; MOCK_TOURS.push(tour); return tour; },
+    update: async (id: number, data: any) => {
+      await delay(300);
       const idx = MOCK_TOURS.findIndex(t => t.id === id);
-      if (idx !== -1) MOCK_TOURS[idx] = { ...MOCK_TOURS[idx], ...data };
-      return data; 
+      if (idx !== -1) {
+        MOCK_TOURS[idx] = { ...MOCK_TOURS[idx], ...data };
+        return MOCK_TOURS[idx];
+      }
+      throw new Error('Tour not found');
     },
-    delete: async (id: number) => { await delay(300); MOCK_TOURS = MOCK_TOURS.filter(t => t.id !== id); }
+    delete: async (id: number) => { await delay(300); MOCK_TOURS = MOCK_TOURS.filter(t => t.id !== id); },
   },
   schools: {
     list: async (): Promise<School[]> => { await delay(300); return [...MOCK_SCHOOLS]; },
     getById: async (id: number): Promise<School> => { await delay(200); return MOCK_SCHOOLS.find(s => s.id === id)!; },
-    create: async (data: any) => { await delay(400); MOCK_SCHOOLS.push({ ...data, id: Math.random() }); return data; },
-    update: async (id: number, data: any) => { await delay(400); return data; }, 
+    create: async (data: any) => { await delay(400); const school = { ...data, id: Math.random() }; MOCK_SCHOOLS.push(school); return school; },
+    update: async (id: number, data: any) => { await delay(400); const idx = MOCK_SCHOOLS.findIndex(s => s.id === id); if (idx !== -1) MOCK_SCHOOLS[idx] = { ...MOCK_SCHOOLS[idx], ...data }; return MOCK_SCHOOLS[idx]; },
     delete: async (id: number) => { await delay(400); MOCK_SCHOOLS = MOCK_SCHOOLS.filter(s => s.id !== id); },
     getSummary: async (id: number): Promise<SchoolSummary> => {
       await delay(500);
       const school = MOCK_SCHOOLS.find(s => s.id === id);
-      if (!school) throw new Error("School not found");
-      
+      if (!school) throw new Error('School not found');
       return {
         ...school,
         visits: MOCK_VISITS.filter(v => v.school_id === id),
         offers: MOCK_OFFERS.filter(o => o.school_id === id),
-        sales: MOCK_SALES.filter(s => {
-           const offer = MOCK_OFFERS.find(o => o.id === s.offer_id);
-           return offer?.school_id === id;
+        sales: MOCK_SALES.filter(sal => {
+          const offer = MOCK_OFFERS.find(o => o.id === sal.offer_id);
+          return offer?.school_id === id;
         }),
         appointments: MOCK_APPOINTMENTS.filter(a => a.school_id === id),
-        attachments: MOCK_ATTACHMENTS.filter(a => a.related_type === 'school' && a.related_id === id)
+        attachments: MOCK_ATTACHMENTS.filter(a => a.related_type === 'school' && a.related_id === id),
       };
-    }
+    },
   },
   visits: {
-    list: async (): Promise<Visit[]> => { 
-      await delay(300); 
+    list: async (): Promise<Visit[]> => {
+      await delay(300);
       const currentUser = getCurrentUser();
       let filteredVisits = MOCK_VISITS;
       if (currentUser) filteredVisits = filterByRole(MOCK_VISITS, currentUser);
-      
       return filteredVisits.map(v => ({
         ...v,
         school_name: MOCK_SCHOOLS.find(s => s.id === v.school_id)?.name,
-        user_name: MOCK_USERS.find(u => u.id === v.user_id)?.name
+        user_name: MOCK_USERS.find(u => u.id === v.user_id)?.name,
       }));
     },
     getById: async (id: number): Promise<Visit> => { await delay(200); return MOCK_VISITS.find(v => v.id === id)!; },
     create: async (data: any) => { await delay(300); MOCK_VISITS.push({ ...data, id: Math.random() }); },
-    update: async (id: number, data: any) => { await delay(300); },
-    delete: async (id: number) => { await delay(300); MOCK_VISITS = MOCK_VISITS.filter(v => v.id !== id); }
+    update: async (id: number, data: any) => { await delay(300); const idx = MOCK_VISITS.findIndex(v => v.id === id); if (idx !== -1) MOCK_VISITS[idx] = { ...MOCK_VISITS[idx], ...data }; },
+    delete: async (id: number) => { await delay(300); MOCK_VISITS = MOCK_VISITS.filter(v => v.id !== id); },
   },
   offers: {
-    list: async (): Promise<Offer[]> => { 
-      await delay(300); 
+    list: async (): Promise<Offer[]> => {
+      await delay(300);
       const currentUser = getCurrentUser();
       let filteredOffers = MOCK_OFFERS;
       if (currentUser) filteredOffers = filterByRole(MOCK_OFFERS, currentUser);
-      
       return filteredOffers.map(o => ({
         ...o,
         school_name: MOCK_SCHOOLS.find(s => s.id === o.school_id)?.name,
-        user_name: MOCK_USERS.find(u => u.id === o.user_id)?.name
+        user_name: MOCK_USERS.find(u => u.id === o.user_id)?.name,
       }));
     },
     getById: async (id: number): Promise<Offer> => { await delay(200); return MOCK_OFFERS.find(o => o.id === id)!; },
-    create: async (data: any) => { await delay(300); MOCK_OFFERS.push({...data, id: Math.random()}); },
-    update: async (id: number, data: any) => { 
+    create: async (data: any) => { await delay(300); const offer = { ...data, id: Math.random() }; MOCK_OFFERS.push(offer); return offer; },
+    update: async (id: number, data: any) => {
       await delay(300);
       const offerIndex = MOCK_OFFERS.findIndex(o => o.id === id);
-      if (offerIndex === -1) throw new Error("Offer not found");
-
+      if (offerIndex === -1) throw new Error('Offer not found');
       const currentUser = getCurrentUser();
       const offer = MOCK_OFFERS[offerIndex];
 
-      // Check RBAC for update
       if (currentUser) {
-         const isSystemAdmin = currentUser.role === 'system_admin';
-         if (isSystemAdmin) {
-             // Bypass checks
-         } else {
-            const isOwner = offer.user_id === currentUser.id;
-            const isPast = offer.valid_until ? new Date(offer.valid_until) < new Date() : false;
-            const isLocked = ['accepted', 'rejected'].includes(offer.status);
-
-            if (currentUser.role === 'sales') {
-                if (!isOwner) throw new Error("Permission denied: Not owner");
-                if (isPast) throw new Error("Permission denied: Offer expired");
-                if (isLocked) throw new Error("Permission denied: Offer is locked");
-            } else if (currentUser.role === 'manager') {
-                // Manager logic (simplified for mock)
-                if (isPast || isLocked) throw new Error("Permission denied: Offer expired or locked");
-            }
-         }
+        const isSystemAdmin = currentUser.role === 'system_admin';
+        if (!isSystemAdmin) {
+          const isOwner = offer.user_id === currentUser.id;
+          const isPast = offer.valid_until ? new Date(offer.valid_until) < new Date() : false;
+          const isLocked = ['accepted', 'rejected'].includes(offer.status);
+          if (currentUser.role === 'sales') {
+            if (!isOwner) throw new Error('Permission denied: Not owner');
+            if (isPast) throw new Error('Permission denied: Offer expired');
+            if (isLocked) throw new Error('Permission denied: Offer is locked');
+          } else if (currentUser.role === 'manager') {
+            if (isPast || isLocked) throw new Error('Permission denied: Offer expired or locked');
+          }
+        }
       }
 
       const oldStatus = MOCK_OFFERS[offerIndex].status;
-      const newStatus = data.status;
+      const newStatus = data.status ?? oldStatus;
 
-      // Update the offer
       MOCK_OFFERS[offerIndex] = { ...MOCK_OFFERS[offerIndex], ...data };
 
-      // Workflow: Accepted -> Auto Sale + Appointment
       if (newStatus === 'accepted' && oldStatus !== 'accepted') {
-        const offer = MOCK_OFFERS[offerIndex];
-        
-        // 1. Create Sale
+        const updatedOffer = MOCK_OFFERS[offerIndex];
+
         const newSale: Sale = {
           id: Math.random(),
-          offer_id: offer.id,
-          closed_by_user_id: offer.user_id, // Assuming the offer owner closes it
+          offer_id: updatedOffer.id,
+          closed_by_user_id: updatedOffer.user_id,
           closed_date: new Date().toISOString().split('T')[0],
-          final_revenue_amount: offer.total_price,
-          currency: offer.currency,
+          final_revenue_amount: updatedOffer.total_price,
+          currency: updatedOffer.currency,
           payment_status: 'pending',
-          created_from_offer: true
+          created_from_offer: true,
         };
         MOCK_SALES.push(newSale);
 
-        // 2. Create Appointment
         const newAppt: Appointment = {
           id: Math.random(),
-          school_id: offer.school_id,
-          user_id: offer.user_id,
-          type: 'visit', // Using 'visit' as 'sale_followup' isn't in type union strictly yet, but can expand
-          start_datetime: new Date(Date.now() + 86400000).toISOString(), // +1 day
-          end_datetime: new Date(Date.now() + 86400000 + 3600000).toISOString(), // +1 hour
+          school_id: updatedOffer.school_id,
+          user_id: updatedOffer.user_id,
+          type: 'visit',
+          start_datetime: new Date(Date.now() + 86400000).toISOString(),
+          end_datetime: new Date(Date.now() + 86400000 + 3600000).toISOString(),
           status: 'planned',
           notes: 'Otomatik: Teklif kabul edildi -> Satış oluşturuldu.',
-          is_auto_created: true
+          is_auto_created: true,
         };
         MOCK_APPOINTMENTS.push(newAppt);
 
-        // 3. Audit Log
         MOCK_AUDIT_LOGS.push({
           id: Math.random(),
-          user_id: offer.user_id, // Or current user
+          user_id: updatedOffer.user_id,
           user_name: 'System',
           action: 'OFFER_ACCEPTED_TO_SALE',
           entity_type: 'offer',
-          entity_id: offer.id,
+          entity_id: updatedOffer.id,
           changes: JSON.stringify({ sale_id: newSale.id, appointment_id: newAppt.id }),
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
         });
 
-        // 4. Notification
         MOCK_ANNOUNCEMENTS.push({
-            id: Math.random(),
-            title: 'Tebrikler!',
-            message: 'Teklif kabul edildi, satış kaydın oluşturuldu.',
-            type: 'target_info', // Using closest type
-            audience_type: 'user',
-            created_at: new Date().toISOString()
+          id: Math.random(),
+          title: 'Tebrikler!',
+          message: 'Teklif kabul edildi, satış kaydın oluşturuldu.',
+          type: 'target_info',
+          audience_type: 'user',
+          audience_id: updatedOffer.user_id,
+          created_at: new Date().toISOString(),
         });
       }
+
       return MOCK_OFFERS[offerIndex];
     },
     delete: async (id: number) => { await delay(300); MOCK_OFFERS = MOCK_OFFERS.filter(o => o.id !== id); },
     sendEmail: async (id: number, emailData: any) => {
-        await delay(1000);
-        const offerIndex = MOCK_OFFERS.findIndex(o => o.id === id);
-        if (offerIndex === -1) throw new Error("Offer not found");
-        
-        MOCK_OFFERS[offerIndex].last_sent_at = new Date().toISOString();
-        MOCK_OFFERS[offerIndex].last_sent_status = 'success';
-        
-        MOCK_AUDIT_LOGS.push({
-            id: Math.random(),
-            user_id: 1, // Mock user
-            user_name: 'Current User',
-            action: 'OFFER_EMAIL_SENT',
-            entity_type: 'offer',
-            entity_id: id,
-            created_at: new Date().toISOString()
-        });
-        
-        return { success: true };
-    }
+      await delay(1000);
+      const offerIndex = MOCK_OFFERS.findIndex(o => o.id === id);
+      if (offerIndex === -1) throw new Error('Offer not found');
+      MOCK_OFFERS[offerIndex].last_sent_at = new Date().toISOString();
+      MOCK_OFFERS[offerIndex].last_sent_status = 'success';
+      MOCK_AUDIT_LOGS.push({
+        id: Math.random(),
+        user_id: 1,
+        user_name: 'Current User',
+        action: 'OFFER_EMAIL_SENT',
+        entity_type: 'offer',
+        entity_id: id,
+        created_at: new Date().toISOString(),
+      });
+      return { success: true };
+    },
   },
   offerTemplates: {
-    list: async (): Promise<OfferTemplate[]> => {
-      await delay(300);
-      return [...MOCK_OFFER_TEMPLATES];
-    },
-    getById: async (id: number) => {
-      await delay(200);
-      return MOCK_OFFER_TEMPLATES.find(t => t.id === id);
-    },
+    list: async (): Promise<OfferTemplate[]> => { await delay(300); return [...MOCK_OFFER_TEMPLATES]; },
+    getById: async (id: number) => { await delay(200); return MOCK_OFFER_TEMPLATES.find(t => t.id === id); },
     update: async (id: number, data: any) => {
       await delay(300);
       const idx = MOCK_OFFER_TEMPLATES.findIndex(t => t.id === id);
       if (idx !== -1) {
         MOCK_OFFER_TEMPLATES[idx] = { ...MOCK_OFFER_TEMPLATES[idx], ...data };
       }
-    }
+    },
   },
   targets: {
     list: async (userId?: number, year?: number, month?: number): Promise<SalesTarget[]> => {
@@ -581,16 +531,11 @@ export const api = {
 
       if (currentUser) {
         if (currentUser.role === 'sales') {
-          // Sales sees only their own
           filtered = filtered.filter(t => t.user_id === currentUser.id);
         } else if (currentUser.role === 'manager') {
-          // Manager sees team
-          const teamUserIds = MOCK_USERS
-            .filter(u => u.team_id === currentUser.team_id)
-            .map(u => u.id);
+          const teamUserIds = MOCK_USERS.filter(u => u.team_id === currentUser.team_id).map(u => u.id);
           filtered = filtered.filter(t => teamUserIds.includes(t.user_id));
         }
-        // Admin and System Admin sees all unless userId filter is provided
       }
 
       if (userId) filtered = filtered.filter(t => t.user_id === userId);
@@ -604,11 +549,7 @@ export const api = {
     },
     create: async (data: any): Promise<SalesTarget> => {
       await delay(300);
-      const newTarget: SalesTarget = {
-        ...data,
-        id: Math.random(),
-        created_by_user_id: 1,
-      };
+      const newTarget: SalesTarget = { ...data, id: Math.random(), created_by_user_id: 1 };
       MOCK_SALES_TARGETS.push(newTarget);
       return newTarget;
     },
@@ -626,7 +567,6 @@ export const api = {
       const currentUser = getCurrentUser();
       let filteredSales = MOCK_SALES;
       if (currentUser) filteredSales = filterByRole(MOCK_SALES, currentUser, 'closed_by_user_id');
-
       return filteredSales.map(s => {
         const offer = MOCK_OFFERS.find(o => o.id === s.offer_id);
         const school = offer ? MOCK_SCHOOLS.find(sch => sch.id === offer.school_id) : null;
@@ -638,10 +578,7 @@ export const api = {
         };
       });
     },
-    create: async (data: any) => {
-      await delay(300);
-      MOCK_SALES.push({ ...data, id: Math.random() });
-    },
+    create: async (data: any) => { await delay(300); MOCK_SALES.push({ ...data, id: Math.random() }); },
   },
   leaves: {
     list: async (): Promise<LeaveRequest[]> => {
@@ -649,34 +586,18 @@ export const api = {
       const currentUser = getCurrentUser();
       let filteredLeaves = MOCK_LEAVES;
       if (currentUser) filteredLeaves = filterByRole(MOCK_LEAVES, currentUser);
-
       return filteredLeaves.map(l => ({
         ...l,
         user_name: MOCK_USERS.find(u => u.id === l.user_id)?.name,
       }));
     },
-    create: async (data: any) => {
-      await delay(300);
-      MOCK_LEAVES.push({ ...data, id: Math.random() });
-    },
-    updateStatus: async (id: number, status: any) => {
-      await delay(300);
-      // mock
-    },
+    create: async (data: any) => { await delay(300); MOCK_LEAVES.push({ ...data, id: Math.random() }); },
+    updateStatus: async (id: number, status: any) => { await delay(300); /* mock */ },
   },
   announcements: {
-    list: async (): Promise<Announcement[]> => {
-      await delay(200);
-      return [...MOCK_ANNOUNCEMENTS];
-    },
-    create: async (data: any) => {
-      await delay(300);
-      MOCK_ANNOUNCEMENTS.push({ ...data, id: Math.random() });
-    },
-    delete: async (id: number) => {
-      await delay(300);
-      MOCK_ANNOUNCEMENTS = MOCK_ANNOUNCEMENTS.filter(a => a.id !== id);
-    },
+    list: async (): Promise<Announcement[]> => { await delay(200); return [...MOCK_ANNOUNCEMENTS]; },
+    create: async (data: any) => { await delay(300); MOCK_ANNOUNCEMENTS.push({ ...data, id: Math.random() }); },
+    delete: async (id: number) => { await delay(300); MOCK_ANNOUNCEMENTS = MOCK_ANNOUNCEMENTS.filter(a => a.id !== id); },
   },
   appointments: {
     list: async (): Promise<Appointment[]> => {
@@ -684,27 +605,21 @@ export const api = {
       const currentUser = getCurrentUser();
       let filteredAppts = MOCK_APPOINTMENTS;
       if (currentUser) filteredAppts = filterByRole(MOCK_APPOINTMENTS, currentUser);
-
       return filteredAppts.map(a => ({
         ...a,
         school_name: MOCK_SCHOOLS.find(s => s.id === a.school_id)?.name,
         user_name: MOCK_USERS.find(u => u.id === a.user_id)?.name,
       }));
     },
-    create: async (data: any) => {
-      await delay(300);
-      MOCK_APPOINTMENTS.push({ ...data, id: Math.random() });
-    },
+    create: async (data: any) => { await delay(300); MOCK_APPOINTMENTS.push({ ...data, id: Math.random() }); },
   },
   dashboard: {
     getSummary: async (): Promise<DashboardSummary> => {
       await delay(500);
       const currentUser = getCurrentUser();
-
       let multiplier = 1;
       if (currentUser?.role === 'manager') multiplier = 0.5;
       if (currentUser?.role === 'sales') multiplier = 0.2;
-
       return {
         total_schools: MOCK_SCHOOLS.length,
         total_visits: Math.floor(MOCK_VISITS.length * multiplier),
@@ -751,9 +666,7 @@ export const api = {
   attachments: {
     list: async (relatedType: string, relatedId: number): Promise<Attachment[]> => {
       await delay(300);
-      return MOCK_ATTACHMENTS.filter(
-        a => a.related_type === relatedType && a.related_id === relatedId
-      );
+      return MOCK_ATTACHMENTS.filter(a => a.related_type === relatedType && a.related_id === relatedId);
     },
     upload: async (data: any): Promise<Attachment> => {
       await delay(800);
@@ -769,10 +682,7 @@ export const api = {
     },
   },
   auditLogs: {
-    list: async (): Promise<AuditLog[]> => {
-      await delay(400);
-      return [...MOCK_AUDIT_LOGS];
-    },
+    list: async (): Promise<AuditLog[]> => { await delay(400); return [...MOCK_AUDIT_LOGS]; },
   },
   performance: {
     getSummary: async (userId?: number): Promise<PerformanceSummary> => {
