@@ -13,7 +13,9 @@ import {
   CreditCard,
   Calendar,
   Megaphone,
-  Clock
+  Clock,
+  Users,
+  Shield
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,50 +25,70 @@ import logo from '@assets/generated_images/minimalist_phoenix_logo_for_anka_trav
 export function Sidebar() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   const navItems = [
     {
       title: t('common.dashboard'),
       icon: LayoutDashboard,
-      href: '/dashboard'
+      href: '/dashboard',
+      roles: ['admin', 'manager', 'sales']
     },
     {
       title: t('common.schools'),
       icon: School,
-      href: '/schools'
+      href: '/schools',
+      roles: ['admin', 'manager'] // Hidden for sales in menu, but accessible read-only
     },
     {
       title: t('common.visits'),
       icon: Briefcase,
-      href: '/visits'
+      href: '/visits',
+      roles: ['admin', 'manager', 'sales']
     },
     {
       title: t('common.offers'),
       icon: FileText,
-      href: '/offers'
+      href: '/offers',
+      roles: ['admin', 'manager', 'sales']
     },
     {
       title: t('common.sales'),
       icon: CreditCard,
-      href: '/sales'
+      href: '/sales',
+      roles: ['admin', 'manager', 'sales']
     },
     {
       title: t('common.leave_requests'),
       icon: Calendar,
-      href: '/leave-requests'
+      href: '/leave-requests',
+      roles: ['admin', 'manager', 'sales']
     },
     {
       title: t('common.announcements'),
       icon: Megaphone,
-      href: '/announcements'
+      href: '/announcements',
+      roles: ['admin', 'manager', 'sales']
     },
     {
       title: t('common.appointments'),
       icon: Clock,
-      href: '/appointments'
+      href: '/appointments',
+      roles: ['admin', 'manager', 'sales']
     },
+    {
+      title: t('common.users'),
+      icon: Users,
+      href: '/users',
+      roles: ['admin']
+    },
+    {
+      title: t('common.teams'),
+      icon: Shield,
+      href: '/teams',
+      roles: ['admin']
+    }
   ];
 
   return (
@@ -90,7 +112,9 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 py-6 px-3 space-y-1">
-        {navItems.map((item) => {
+        {navItems
+          .filter(item => user && item.roles.includes(user.role))
+          .map((item) => {
           const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
             <Link 
@@ -119,6 +143,14 @@ export function Sidebar() {
 
       {/* Footer Actions */}
       <div className="p-3 border-t border-sidebar-border/50 space-y-2">
+        <div className={cn("flex items-center gap-3 px-2 py-2 mb-2 text-sidebar-foreground/60 text-xs", collapsed && "justify-center")}>
+           {!collapsed && (
+             <div className="flex flex-col">
+               <span className="font-medium text-sidebar-foreground">{user?.name}</span>
+               <span className="uppercase text-[10px] tracking-wider">{user?.role}</span>
+             </div>
+           )}
+        </div>
         <Button 
           variant="ghost" 
           size="sm" 

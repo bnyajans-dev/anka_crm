@@ -10,6 +10,8 @@
     "leave_requests": "Leave Requests",
     "announcements": "Announcements",
     "appointments": "Agenda",
+    "users": "Users",
+    "teams": "Teams",
     "add_new": "Add New",
     "save": "Save",
     "cancel": "Cancel",
@@ -26,6 +28,8 @@
     "status": "Status",
     "date": "Date",
     "user": "User",
+    "role": "Role",
+    "team": "Team",
     "actions": "Actions",
     "loading": "Loading..."
   },
@@ -85,5 +89,23 @@
     "total_sales": "Sales",
     "total_revenue": "Total Revenue",
     "upcoming_appointments": "Upcoming Appts"
+  },
+  "users": {
+    "title": "Users List",
+    "new_user": "New User",
+    "edit_user": "Edit User",
+    "name": "Name",
+    "email": "Email",
+    "role": "Role",
+    "team": "Team",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "teams": {
+    "title": "Teams List",
+    "new_team": "New Team",
+    "name": "Team Name",
+    "manager": "Manager"
   }
 }

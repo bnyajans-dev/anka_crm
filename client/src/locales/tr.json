@@ -10,6 +10,8 @@
     "leave_requests": "İzin Talepleri",
     "announcements": "Duyurular",
     "appointments": "Ajanda",
+    "users": "Kullanıcılar",
+    "teams": "Takımlar",
     "add_new": "Yeni Ekle",
     "save": "Kaydet",
     "cancel": "İptal",
@@ -26,6 +28,8 @@
     "status": "Durum",
     "date": "Tarih",
     "user": "Kullanıcı",
+    "role": "Rol",
+    "team": "Takım",
     "actions": "İşlemler",
     "loading": "Yükleniyor..."
   },
@@ -85,5 +89,23 @@
     "total_sales": "Satışlar",
     "total_revenue": "Toplam Ciro",
     "upcoming_appointments": "Yaklaşan Randevular"
+  },
+  "users": {
+    "title": "Kullanıcı Listesi",
+    "new_user": "Yeni Kullanıcı",
+    "edit_user": "Kullanıcı Düzenle",
+    "name": "İsim",
+    "email": "E-posta",
+    "role": "Rol",
+    "team": "Takım",
+    "status": "Durum",
+    "active": "Aktif",
+    "inactive": "Pasif"
+  },
+  "teams": {
+    "title": "Takım Listesi",
+    "new_team": "Yeni Takım",
+    "name": "Takım Adı",
+    "manager": "Yönetici"
   }
 }

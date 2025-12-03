@@ -21,6 +21,9 @@ import SalesList from "@/pages/Sales/SalesList";
 import AnnouncementsList from "@/pages/Announcements/AnnouncementsList";
 import LeaveRequestsList from "@/pages/Leaves/LeaveRequestsList";
 import AppointmentsList from "@/pages/Appointments/AppointmentsList";
+import UsersList from "@/pages/Users/UsersList";
+import TeamsList from "@/pages/Teams/TeamsList";
+import RequireRole from "@/components/RequireRole";
 import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
 
@@ -89,6 +92,22 @@ function Router() {
       <Route path="/leave-requests" element={<ProtectedRoute><LeaveRequestsList /></ProtectedRoute>} />
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsList /></ProtectedRoute>} />
       
+      <Route path="/users" element={
+        <ProtectedRoute>
+          <RequireRole roles={['admin']}>
+            <UsersList />
+          </RequireRole>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/teams" element={
+        <ProtectedRoute>
+          <RequireRole roles={['admin']}>
+            <TeamsList />
+          </RequireRole>
+        </ProtectedRoute>
+      } />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

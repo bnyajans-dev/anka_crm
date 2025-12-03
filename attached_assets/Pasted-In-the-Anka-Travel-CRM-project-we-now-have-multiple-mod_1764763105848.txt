@@ -1,0 +1,184 @@
+In the Anka Travel CRM project we now have multiple modules:
+- schools, visits, offers, sales, leave-requests, announcements, appointments, dashboard
+
+Currently, permissions are basic.  
+Now I want to IMPLEMENT REAL ROLE-BASED ACCESS (RBAC) and user/team management
+for three roles: admin, manager, sales.
+
+===========================================
+1) BACKEND – USERS & TEAMS MANAGEMENT
+===========================================
+
+We already have tables for users and teams (or create them now if missing):
+
+users
+- id (uuid)
+- name
+- email (unique)
+- password_hash
+- role: enum('admin','manager','sales')
+- team_id (nullable FK → teams)
+- is_active (bool, default true)
+- created_at, updated_at
+
+teams
+- id (uuid)
+- name
+- manager_id (FK → users.id, nullable for now)
+- created_at, updated_at
+
+Please:
+
+1. Ensure these tables exist in the ORM schema and migrations.
+
+2. Create endpoints (all JWT-protected, admin-only unless noted):
+
+USERS
+- GET    /api/users              // list users (admin)
+- GET    /api/users/:id
+- POST   /api/users              // admin creates a new user with role and team
+- PUT    /api/users/:id          // update name, email, role, team_id, is_active
+- DELETE /api/users/:id          // soft delete or is_active=false
+
+TEAMS
+- GET    /api/teams
+- GET    /api/teams/:id
+- POST   /api/teams              // admin creates team (name, manager_id)
+- PUT    /api/teams/:id          // update name, manager_id
+- DELETE /api/teams/:id
+
+3. Update JWT payload and auth middleware:
+- When user logs in, token should include:
+  { id, name, email, role, teamId }
+- Ensure req.user is typed and available in controllers.
+
+4. Enforce RBAC on existing endpoints:
+
+General rules:
+- ADMIN:
+  - Full access to everything.
+- MANAGER:
+  - Can see/edit data ONLY for users in their team:
+    - visits, offers, sales, leave-requests, appointments
+  - Cannot change other managers/admins.
+- SALES:
+  - Can only see their own:
+    - visits, offers, sales, leave-requests, appointments
+  - Can see schools list (and details), but not edit/delete schools
+    (only admins can edit/delete schools).
+
+Apply these checks:
+- visits:
+  - list: filter by user/team as per role
+  - detail/edit/delete: only if within allowed scope
+- offers, sales:
+  - same pattern (scope by user/team)
+- leave-requests:
+  - sales → only own
+  - manager → team’s users
+  - admin → all
+- appointments:
+  - sales → only own
+  - manager → team
+  - admin → all
+- schools:
+  - admin/manager: full CRUD
+  - sales: read-only (no create/update/delete)
+
+Create small helper utilities like:
+- isAdmin(user)
+- isManager(user)
+- isSales(user)
+- getTeamUserIds(teamId)  // to filter by team
+
+===========================================
+2) FRONTEND – ROLE-AWARE UI
+===========================================
+
+We already have React + TS + Tailwind admin panel, with:
+- login
+- ProtectedRoute
+- axios instance
+
+Now:
+
+1. Create an auth context or hook (if not already):
+   - src/context/AuthContext.tsx or src/hooks/useAuth.ts
+   - It should expose:
+     - user: { id, name, email, role, teamId } | null
+     - token
+     - login(), logout()
+   - When login succeeds, decode the JWT payload (or read returned user data)
+     and store user info in state + localStorage.
+
+2. Implement a simple "RequireRole" component:
+
+   src/components/RequireRole.tsx
+   - Props: roles: Array<'admin' | 'manager' | 'sales'>
+   - If current user has one of these roles → render children
+   - Otherwise → show “You do not have access to this page” or redirect.
+
+3. Update sidebar menu to be role-aware:
+
+   - "Kullanıcılar" and "Takımlar" only visible for role = 'admin'
+   - "İzin Talepleri" page:
+     - Admin/Manager: see all/team
+     - Sales: see only own – but still can have a simplified view.
+   - "Teklifler" / "Satışlar" / "Ziyaretler" / "Ajanda":
+     - Visible to all, but content scoped by backend.
+
+   Implement a menu config like:
+
+   const menuItems = [
+     { label: 'Panel', path: '/', roles: ['admin','manager','sales'] },
+     { label: 'Okullar', path: '/schools', roles: ['admin','manager'] },
+     { label: 'Ziyaretler', path: '/visits', roles: ['admin','manager','sales'] },
+     ...
+     { label: 'Kullanıcılar', path: '/users', roles: ['admin'] },
+     { label: 'Takımlar', path: '/teams', roles: ['admin'] },
+   ];
+
+   and filter by current user role.
+
+4. Create basic pages for Users and Teams:
+
+USERS
+- /users (UsersListPage)
+  - table: name, email, role, team, is_active
+  - actions: edit, deactivate
+- /users/new (CreateUserPage)
+  - form: name, email, password (for now), role, team
+- /users/:id/edit (EditUserPage)
+
+TEAMS
+- /teams (TeamsListPage)
+  - table: name, manager_name
+- /teams/new
+  - form: name, manager (select user where role = manager)
+- /teams/:id/edit
+
+Use the existing axios instance to call:
+- /api/users, /api/teams
+Wrap all in ProtectedRoute + RequireRole where needed.
+
+===========================================
+3) GENERAL CLEANUP
+===========================================
+
+- Make sure all pages that require login are wrapped with ProtectedRoute.
+- All admin-only pages (users, teams) additionally wrapped with <RequireRole roles={['admin']}>.
+- Show the logged-in user’s name and role in the top-right of the layout.
+- Optionally, add a simple “role badge” (Admin / Yönetici / Saha).
+
+===========================================
+GOAL
+
+After applying all this:
+
+- Admin can manage users, teams, all data.
+- Manager sees only their team’s data, can approve leave, view performance.
+- Sales sees only their own data and has read-only access where appropriate.
+- The UI (menus & pages) adapts to the user’s role.
+
+Implement all of the above in a consistent, clean, TypeScript-safe way,
+integrated with the current codebase.
