@@ -3,16 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Save, Plus, Search } from 'lucide-react';
+import { Loader2, Plus, Search, User as UserIcon } from 'lucide-react';
 import { api, SalesTarget, User } from '@/lib/mockApi';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const targetSchema = z.object({
   user_id: z.string(),
@@ -26,19 +25,19 @@ const targetSchema = z.object({
 });
 
 export default function TargetsList() {
-  const { t } = useTranslation();
   const { toast } = useToast();
-  const [targets, setTargets] = useState<SalesTarget[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [targets, setTargets] = useState<SalesTarget[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isOpen, setIsOpen] = useState(false);
-  const [editingTarget, setEditingTarget] = useState<SalesTarget | null>(null);
 
   const form = useForm<z.infer<typeof targetSchema>>({
     resolver: zodResolver(targetSchema),
     defaultValues: {
+      user_id: '',
       period_type: 'month',
       period_year: new Date().getFullYear(),
+      period_month: new Date().getMonth() + 1,
       visit_target: 0,
       offer_target: 0,
       deal_target: 0,
@@ -48,156 +47,153 @@ export default function TargetsList() {
 
   useEffect(() => {
     const load = async () => {
-      const [tData, uData] = await Promise.all([
-        api.targets.list(),
-        api.users.list()
-      ]);
-      setTargets(tData);
+      const uData = await api.users.list();
       setUsers(uData);
       setLoading(false);
     };
     load();
   }, []);
 
+  const loadUserTargets = async (userId: number) => {
+      const tData = await api.targets.list(userId);
+      setTargets(tData);
+  };
+
+  const handleUserSelect = (user: User) => {
+      setSelectedUser(user);
+      form.setValue('user_id', user.id.toString());
+      loadUserTargets(user.id);
+  };
+
   const onSubmit = async (values: z.infer<typeof targetSchema>) => {
     try {
-      if (editingTarget) {
-        await api.targets.update(editingTarget.id, { ...values, user_id: parseInt(values.user_id) });
-        toast({ title: "Target updated" });
-      } else {
-        await api.targets.create({ ...values, user_id: parseInt(values.user_id) });
-        toast({ title: "Target created" });
-      }
-      setIsOpen(false);
-      setEditingTarget(null);
-      form.reset();
-      const tData = await api.targets.list();
-      setTargets(tData);
+      await api.targets.create({ ...values, user_id: parseInt(values.user_id) });
+      toast({ title: "Hedef kaydedildi" });
+      if (selectedUser) loadUserTargets(selectedUser.id);
     } catch (error) {
-      toast({ title: "Error", variant: "destructive" });
+      toast({ title: "Hata", variant: "destructive" });
     }
   };
 
-  const openEdit = (target: SalesTarget) => {
-    setEditingTarget(target);
-    form.reset({
-      user_id: target.user_id.toString(),
-      period_type: target.period_type,
-      period_year: target.period_year,
-      period_month: target.period_month,
-      visit_target: target.visit_target,
-      offer_target: target.offer_target,
-      deal_target: target.deal_target,
-      revenue_target: target.revenue_target,
-    });
-    setIsOpen(true);
-  };
-
   return (
-    <div className="space-y-6 animate-in fade-in">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Hedef Yönetimi</h1>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => { setEditingTarget(null); form.reset(); }}>
-              <Plus className="mr-2 h-4 w-4" /> Yeni Hedef
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingTarget ? 'Hedefi Düzenle' : 'Yeni Hedef Ekle'}</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField control={form.control} name="user_id" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kullanıcı</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Seçiniz" /></SelectTrigger></FormControl>
-                      <SelectContent>{users.map(u => <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>)}</SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="period_type" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Dönem Tipi</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
-                        <SelectContent><SelectItem value="month">Aylık</SelectItem><SelectItem value="year">Yıllık</SelectItem></SelectContent>
-                        </Select>
-                    </FormItem>
-                    )} />
-                    <FormField control={form.control} name="period_month" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Ay</FormLabel>
-                        <FormControl><Input type="number" min={1} max={12} {...field} /></FormControl>
-                    </FormItem>
-                    )} />
-                </div>
+    <div className="space-y-6 animate-in fade-in h-[calc(100vh-100px)] flex flex-col">
+      <h1 className="text-3xl font-bold tracking-tight">Hedef Yönetimi</h1>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="visit_target" render={({ field }) => (
-                        <FormItem><FormLabel>Ziyaret Hedefi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
-                    )} />
-                    <FormField control={form.control} name="offer_target" render={({ field }) => (
-                        <FormItem><FormLabel>Teklif Hedefi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
-                    )} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 min-h-0">
+        {/* Left Column: User List */}
+        <Card className="md:col-span-1 flex flex-col overflow-hidden">
+            <CardHeader className="pb-3 border-b"><CardTitle className="text-base">Personel Listesi</CardTitle></CardHeader>
+            <div className="p-2">
+                <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Ara..." className="pl-8" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField control={form.control} name="deal_target" render={({ field }) => (
-                        <FormItem><FormLabel>Satış Hedefi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
-                    )} />
-                    <FormField control={form.control} name="revenue_target" render={({ field }) => (
-                        <FormItem><FormLabel>Ciro Hedefi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
-                    )} />
+            </div>
+            <CardContent className="p-0 overflow-auto flex-1">
+                <div className="flex flex-col">
+                    {users.map(user => (
+                        <button
+                            key={user.id}
+                            onClick={() => handleUserSelect(user)}
+                            className={`flex items-center gap-3 p-3 text-left hover:bg-accent transition-colors border-b last:border-0 ${selectedUser?.id === user.id ? 'bg-accent' : ''}`}
+                        >
+                            <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                                <UserIcon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="flex-1 overflow-hidden">
+                                <div className="font-medium truncate">{user.name}</div>
+                                <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                    <Badge variant="outline" className="text-[10px] h-5 px-1">{user.role}</Badge>
+                                    {user.team_name && <span className="truncate">{user.team_name}</span>}
+                                </div>
+                            </div>
+                        </button>
+                    ))}
                 </div>
+            </CardContent>
+        </Card>
 
-                <Button type="submit" className="w-full">Kaydet</Button>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+        {/* Right Column: Target Form & History */}
+        <div className="md:col-span-2 space-y-6 overflow-auto">
+            {selectedUser ? (
+                <>
+                    <Card>
+                        <CardHeader><CardTitle>{selectedUser.name} - Yeni Hedef Ekle</CardTitle></CardHeader>
+                        <CardContent>
+                            <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                                <input type="hidden" {...form.register('user_id')} />
+                                
+                                <div className="grid grid-cols-3 gap-4">
+                                    <FormField control={form.control} name="period_type" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Dönem</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                                        <SelectContent><SelectItem value="month">Aylık</SelectItem><SelectItem value="year">Yıllık</SelectItem></SelectContent>
+                                        </Select>
+                                    </FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="period_year" render={({ field }) => (
+                                    <FormItem><FormLabel>Yıl</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="period_month" render={({ field }) => (
+                                    <FormItem><FormLabel>Ay</FormLabel><FormControl><Input type="number" min={1} max={12} {...field} /></FormControl></FormItem>
+                                    )} />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="visit_target" render={({ field }) => (
+                                        <FormItem><FormLabel>Ziyaret Hedefi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="offer_target" render={({ field }) => (
+                                        <FormItem><FormLabel>Teklif Hedefi</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                                    )} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="deal_target" render={({ field }) => (
+                                        <FormItem><FormLabel>Satış Hedefi (Adet)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                                    )} />
+                                    <FormField control={form.control} name="revenue_target" render={({ field }) => (
+                                        <FormItem><FormLabel>Ciro Hedefi (Tutar)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                                    )} />
+                                </div>
+
+                                <Button type="submit" className="w-full">Kaydet</Button>
+                            </form>
+                            </Form>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader><CardTitle>Hedef Geçmişi</CardTitle></CardHeader>
+                        <CardContent>
+                            {targets.length === 0 ? <p className="text-muted-foreground">Kayıtlı hedef bulunamadı.</p> : (
+                                <div className="space-y-2">
+                                    {targets.map(t => (
+                                        <div key={t.id} className="flex items-center justify-between p-3 border rounded bg-muted/20">
+                                            <div className="font-medium">
+                                                {t.period_year} / {t.period_type === 'month' ? t.period_month : 'Tüm Yıl'}
+                                            </div>
+                                            <div className="text-sm flex gap-4">
+                                                <span>Ciro: <b>{t.revenue_target.toLocaleString()}</b></span>
+                                                <span>Satış: <b>{t.deal_target}</b></span>
+                                                <span>Ziyaret: <b>{t.visit_target}</b></span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                </>
+            ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground border-2 border-dashed rounded-lg">
+                    Soldan bir personel seçiniz.
+                </div>
+            )}
+        </div>
       </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Kullanıcı</TableHead>
-                <TableHead>Dönem</TableHead>
-                <TableHead>Ziyaret</TableHead>
-                <TableHead>Teklif</TableHead>
-                <TableHead>Satış</TableHead>
-                <TableHead>Ciro</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
-              ) : (
-                targets.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell>{t.user_name}</TableCell>
-                    <TableCell>{t.period_year} / {t.period_month || 'Tüm Yıl'}</TableCell>
-                    <TableCell>{t.visit_target}</TableCell>
-                    <TableCell>{t.offer_target}</TableCell>
-                    <TableCell>{t.deal_target}</TableCell>
-                    <TableCell>{t.revenue_target}</TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => openEdit(t)}>Düzenle</Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   );
 }

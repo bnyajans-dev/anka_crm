@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Loader2, ChevronLeft, Calendar, FileText, DollarSign, MapPin } from 'lucide-react';
+import { Loader2, ChevronLeft, Briefcase, FileText, DollarSign, MapPin } from 'lucide-react';
 import { api, SchoolSummary } from '@/lib/mockApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

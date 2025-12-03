@@ -1,0 +1,559 @@
+You are an expert React + TypeScript + Tailwind + Vite engineer.
+You are working on an internal CRM-like app called **Anka Travel CRM**.
+
+The tech stack (FRONTEND SIDE) is:
+
+- React + TypeScript
+- TailwindCSS
+- Vite
+- A `mockApi.ts` file that exports a big `api` object with methods like:
+  - api.auth.login
+  - api.users.list / create / update
+  - api.schools.list / getSummary
+  - api.visits.list
+  - api.offers.list / update / sendEmail
+  - api.offerTemplates.list / update
+  - api.targets.list / create / update
+  - api.sales.list
+  - api.leaves.list
+  - api.announcements.list / create / delete
+  - api.appointments.list
+  - api.dashboard.getSummary / getCharts
+  - api.attachments.list / upload
+  - api.auditLogs.list
+  - api.performance.getSummary
+  - api.commissions.list
+  - api.pdf.generate
+
+There is already:
+
+- A layout with sidebar + header
+- A routing system (React Router) for pages like:
+  - /login
+  - /dashboard
+  - /schools
+  - /visits
+  - /offers
+  - /sales
+  - /appointments
+  - /announcements
+- Role-based logic (admin / manager / sales) via AuthContext or similar.
+
+Now we want to **COMPLETE ALL MISSING SCREENS AND UI FLOWS** on the frontend only.
+Data persistence can stay in-memory via `mockApi` for now.
+
+Please do NOT rewrite everything from scratch.
+Instead, **incrementally add** these UI modules and routes.
+
+====================================================
+GENERAL UI GUIDELINES
+====================================================
+
+- Use React + TypeScript functional components.
+- Use TailwindCSS utility classes for styling.
+- Keep components clean and separated (e.g. in `src/pages`, `src/components` folders).
+- Make all screens **responsive** (desktop + tablet + mobile).
+- Use a consistent design:
+  - Page title at top
+  - Filters/actions in a top bar
+  - Content in cards/tables/grids
+- Reuse any existing shared components (like PageLayout, Card, Table) if present.
+- For role-based visibility, respect the current Auth / role tools (e.g. RequireRole, ProtectedRoute).
+
+If some file names don’t exist exactly, adapt to the project structure.
+The important part is the functionality, not exact paths.
+
+====================================================
+1) OFFER DETAIL PAGE (/offers/:id)
+====================================================
+
+Create a full **Offer Detail** screen component, e.g.:
+
+- `src/pages/offers/OfferDetailPage.tsx`
+
+Route: `/offers/:id` (or similar).
+
+Features:
+
+- Fetch the chosen offer:
+  - Either from a dedicated `api.offers.list` and find by id,
+  - Or add a small helper in mockApi if necessary (e.g. `getById`).
+- Show:
+
+  - School name
+  - Tour name
+  - Student / teacher count
+  - Price per student and total price
+  - Currency
+  - Valid until date
+  - Status badge (draft / sent / negotiation / accepted / rejected)
+  - Contact name + contact email
+  - Owner (salesperson) name
+
+- Actions:
+
+  1) **Edit Offer**: link to the existing edit form (if present, e.g. /offers/:id/edit).
+     - Disable or hide this if the offer is locked (status accepted/rejected or expired).
+     - You can reuse existing "locked" logic or compute locally:
+       - isPast = valid_until < today
+       - isLockedStatus = 'accepted' or 'rejected'
+
+  2) **Generate PDF**:
+     - Button "PDF Oluştur / Önizle"
+     - On click, call `api.pdf.generate(offer.id)` and open the returned URL in a new tab.
+
+  3) **Send by Email**:
+     - Button: "Teklifi Gönder (E-posta)"
+     - Disabled if `contact_email` is missing.
+     - On click:
+       - Show a confirm dialog (e.g. a modal).
+       - Call `api.offers.sendEmail(offer.id, { ... })`.
+       - On success, show a toast.
+       - Update the UI to show:
+         - Last sent at (`offer.last_sent_at`)
+         - Last sent status (success/error).
+
+- Sections on page:
+
+  1. **Offer Info Card**
+  2. **Contact & Communication Section**
+     - Contact name
+     - Contact email
+     - Last mail sent at + status
+  3. **Linked Records Section**
+     - Show related sale (if exists in `api.sales.list` with `offer_id` = this offer.id).
+     - Show related appointments (from `api.appointments.list` filtered by school_id & user_id).
+     - Show attachments (use `api.attachments.list('offer', offer.id)`).
+
+- Add a back button "← Tekliflere Dön".
+
+Make it pretty and readable.
+
+====================================================
+2) OFFER TEMPLATE DESIGNER (/settings/offer-template)
+====================================================
+
+Create an **Offer Template** page for admin:
+
+- Component: `src/pages/settings/OfferTemplatePage.tsx`
+- Route: `/settings/offer-template`
+- Guard: admin only.
+
+Use `api.offerTemplates.list()` to get the (single) default template.
+You can assume the first one or the one with `is_default = true`.
+
+UI:
+
+- Inputs:
+
+  - Email subject template (text)
+  - Email body template (textarea or simple text editor)
+  - PDF header template (textarea)
+  - PDF footer template (textarea)
+
+- A help panel on the side listing supported placeholders:
+
+  - {{school_name}}
+  - {{contact_name}}
+  - {{tour_name}}
+  - {{student_count}}
+  - {{teacher_count}}
+  - {{price_per_student}}
+  - {{total_price}}
+  - {{currency}}
+  - {{valid_until}}
+  - {{salesperson_name}}
+  - {{today}}
+
+- A simple "Preview" box that:
+  - Renders email subject/body with sample data (replace placeholders in-memory, no backend needed).
+
+- "Kaydet" button that calls `api.offerTemplates.update(id, updatedData)`.
+
+Use a clean two-column layout on desktop; stacked layout on mobile.
+
+====================================================
+3) SCHOOL 360° VIEW (/schools/:id/360)
+====================================================
+
+Create a **School 360** page:
+
+- Component: `src/pages/schools/School360Page.tsx`
+- Route: `/schools/:id/360`
+
+Use `api.schools.getSummary(id)` which returns:
+
+- The `School` fields
+- visits: Visit[]
+- offers: Offer[]
+- sales: Sale[]
+- appointments: Appointment[]
+- attachments: Attachment[]
+
+UI:
+
+- Top section:
+
+  - School name
+  - City / district
+  - Contact name + phone
+
+- Then a **timeline-style** or segmented view:
+
+  - "Ziyaretler"
+  - "Teklifler"
+  - "Satışlar"
+  - "Randevular"
+  - "Ekler (Dosyalar)"
+
+You can implement as tabs or as vertically stacked sections.
+
+For each:
+
+- Visits:
+  - Show date, salesperson, status, notes.
+
+- Offers:
+  - Show status, total_price, valid_until, with a link to offer detail.
+
+- Sales:
+  - Show closed_date, amount, payment_status.
+
+- Appointments:
+  - Show date/time, type, status.
+
+- Attachments:
+  - Show file_name, type, and a dummy link.
+
+Additionally:
+
+- Show a "School Health" small widget:
+  - For now, compute a simple score in the frontend:
+    - Example: based on counts of visits / offers / sales.
+  - Show a colored badge: "Sağlıklı / Orta / Riskli".
+
+====================================================
+4) OFFERS KANBAN BOARD (/offers/kanban)
+====================================================
+
+Create a **Kanban board** for offers:
+
+- Component: `src/pages/offers/OffersKanbanPage.tsx`
+- Route: `/offers/kanban`
+
+Columns:
+
+- Draft
+- Sent
+- Negotiation
+- Accepted
+- Rejected
+
+Use `api.offers.list()` and group by `status`.
+
+You don’t need full DnD library; a simple version is okay:
+
+- For now, allow status changes via:
+  - Each card has a small dropdown to change status, or
+  - Click actions like "Move to Negotiation", etc.
+- When status changes:
+  - Call `api.offers.update(id, { status: newStatus })`.
+  - Respect the existing locking logic (if update throws, show error message).
+
+Card content:
+
+- tour_name
+- school_name
+- total_price (with currency)
+- owner (user_name)
+- valid_until
+
+The Kanban view is **optional** for sales; mostly for manager/admin.
+You can show it under menu "Teklifler > Kanban".
+
+====================================================
+5) ALERTS CENTER (/alerts)
+====================================================
+
+Create an **Alerts Center** page:
+
+- Component: `src/pages/alerts/AlertsPage.tsx`
+- Route: `/alerts`
+
+Since there is no dedicated `api.alerts`, you can compute alerts on the frontend using:
+
+- `api.offers.list()`
+- `api.visits.list()`
+- `api.targets.list()` (or `api.performance.getSummary` / or user role)
+- `api.appointments.list()`
+
+Define these alert types:
+
+1. **Expiring offers**:
+   - Offers where valid_until is within the next 3 days and status is not accepted/rejected.
+
+2. **Cold schools (no recent visits)**:
+   - Schools that have no visit in the last 90 days (approx).
+   - You can approximate by comparing dates as strings or Date objects.
+
+3. **Behind target** (for sales user):
+   - If performance summary (mock) shows visits / offers / revenue below some threshold.
+
+UI:
+
+- Show alerts in sections:
+
+  - "Süresi Dolmak Üzere Olan Teklifler"
+  - "Uzun Süredir Ziyaret Edilmeyen Okullar"
+  - "Hedef Gerisinde Kalan Performans"
+
+- Provide links to relevant pages (offer detail, school 360, performance page).
+
+Additionally:
+
+- In the global header, add a bell icon with a badge showing the count of alerts.
+- Clicking it can navigate to `/alerts`.
+
+====================================================
+6) PERFORMANCE SUMMARY (/me/performance)
+====================================================
+
+Create a **"Performansım"** page for sales users:
+
+- Component: `src/pages/performance/MyPerformancePage.tsx`
+- Route: `/me/performance`
+- Only accessible to authenticated users; best for role 'sales'.
+
+Use:
+
+- `api.performance.getSummary(currentUser.id?)`
+- Optionally `api.targets.list()` for current user.
+
+UI:
+
+- Four main cards:
+
+  - Ziyaretler: count vs target
+  - Teklifler: count vs target
+  - Satışlar: count vs target
+  - Ciro: revenue vs target
+
+- Each with:
+
+  - Numeric values
+  - A progress bar (Tailwind-based, simple div).
+
+- Below, show a "AI Sales Coach" box:
+
+  - For now, **generate text locally** based on percentages:
+    - If under 50% of target and month is halfway:
+      - "Bu ay hedefinin gerisindesin, şu 3 okulu ziyaret etmeyi deneyebilirsin."
+    - If on track:
+      - "Performansın iyi gidiyor, aynı tempoyla devam et."
+
+No need for real AI API calls; this is purely frontend logic.
+
+====================================================
+7) APPOINTMENTS CALENDAR (/calendar)
+====================================================
+
+Create a **Calendar / Agenda** page:
+
+- Component: `src/pages/calendar/CalendarPage.tsx`
+- Route: `/calendar`
+
+Use `api.appointments.list()`.
+
+UI:
+
+- Tabs or buttons for:
+  - "Liste Görünümü"
+  - "Takvim Görünümü (Basit)"
+
+You don’t have to implement a full calendar library; a simple grouped-by-day list is enough:
+
+- Group appointments by date (YYYY-MM-DD from start_datetime).
+- For each day show:
+
+  - Time range
+  - School name
+  - Type (visit/call/online)
+  - Status
+  - A small badge if `is_auto_created`.
+
+Optionally, you can use a simple calendar grid for the month view, but not mandatory.
+
+====================================================
+8) ANNOUNCEMENTS UI IMPROVEMENTS (/announcements)
+====================================================
+
+Enhance the existing announcements screen or create:
+
+- Admin view:
+  - Table of all announcements
+  - Create new announcement form:
+    - title, message, type, audience_type, expires_at (optional date).
+  - Delete button.
+
+- Sales / Manager view:
+  - Only list announcements (no create/delete).
+  - Highlight new/unseen announcements in UI (local state or based on created_at > lastSeen timestamp saved in localStorage).
+
+Make cards for each announcement with:
+
+- Title
+- Type badge
+- Message
+- Created_at
+- Expires_at (if present, show as "Son tarih").
+
+====================================================
+9) TAGS & SEGMENTS (FRONTEND-ONLY)
+====================================================
+
+Even though there is no tags API in mockApi, we can implement simple **frontend-only tags** as demo:
+
+- Create a simple local tags store using React Context:
+
+  - `src/context/TagContext.tsx`
+  - Holds:
+    - tags: { id: string; name: string; color: string; }[]
+    - schoolTags: { schoolId: number; tagIds: string[] }[]
+  - Provide functions:
+    - addTag(name, color)
+    - deleteTag(id)
+    - assignTagToSchool(schoolId, tagId)
+    - removeTagFromSchool(schoolId, tagId)
+
+- Wrap the app in <TagProvider> near the root.
+
+UI:
+
+1. **Tag Management Page**:
+   - Route: `/settings/tags`
+   - Admin/manager only.
+   - List all tags.
+   - Form to add new tag (name + color string like "bg-blue-500").
+   - Delete tag button.
+
+2. **School Tagging UI**:
+
+   - In School detail or School 360 page, add a "Etiketler" section.
+   - Show assigned tags as colored pills.
+   - Dropdown / multiselect to assign or remove tags.
+
+3. **Filter by Tag on School List**:
+
+   - On `/schools` page, add a filter at the top:
+     - Tag dropdown.
+     - When a tag is selected, filter schools that have that tag (via TagContext).
+
+All this can live entirely in frontend; no persistence needed at this stage.
+
+====================================================
+10) AI-STYLE SMALL WIDGETS (FRONTEND FAKE AI)
+====================================================
+
+Implement **fake AI suggestions** (no backend call, just computed text):
+
+A) On Visit detail page (if exists) or Visit list item:
+
+- A button: "AI’den Teklif Öner"
+- On click:
+  - Show a modal with:
+    - A generated suggestion text based on visit notes and school name.
+    - Example: `tour_name` suggestion and rough price.
+  - This is purely local text, no remote call needed.
+
+B) On School 360 page:
+
+- Show "Risk Skoru" (0–100) computed using simple heuristics:
+  - More visits + offers + sales → higher score.
+- Display as:
+  - 0–40: "Riskli"
+  - 40–70: "Orta"
+  - 70–100: "Sağlıklı"
+
+C) On My Performance page:
+
+- "AI Satış Koçu" section:
+  - Text based on target progress as described before.
+
+These are simple conditional rendering functions.
+
+====================================================
+11) MOBILE PWA DASHBOARD (/m/dashboard)
+====================================================
+
+Create a **mobile-first dashboard**:
+
+- Route: `/m/dashboard`
+- Component: `src/pages/mobile/MobileDashboard.tsx`
+- Layout: single-column, big touch targets.
+
+Use:
+
+- `api.appointments.list()`
+- `api.offers.list()`
+- `api.dashboard.getSummary()`
+
+UI:
+
+Sections:
+
+1. **Bugünkü Randevular**:
+   - List appointments for today.
+   - Button "Hepsini Gör" → navigates to `/calendar`.
+
+2. **Hızlı Aksiyonlar** (big buttons):
+
+   - "Okul Ara" → navigates to `/schools` or opens a simple search input.
+   - "Ziyaret Ekle" → navigates to visit create screen.
+   - "Teklif Oluştur" → navigates to offer create screen.
+
+3. **Kısa Özet**:
+
+   - Hedefe ilerleme (e.g. number of visits/offers/sales this month).
+   - Use small cards.
+
+4. **Soğuk Okullar Uyarısı**:
+
+   - Show 2–3 school names that have no recent visits.
+
+Use Tailwind to make it visually nice and usable with thumbs.
+
+====================================================
+ROUTING & SIDEBAR UPDATES
+====================================================
+
+Update your routing configuration to include all these new pages:
+
+- /offers/:id → OfferDetailPage
+- /offers/kanban → OffersKanbanPage
+- /settings/offer-template → OfferTemplatePage (admin only)
+- /schools/:id/360 → School360Page
+- /alerts → AlertsPage
+- /me/performance → MyPerformancePage
+- /calendar → CalendarPage
+- /settings/tags → TagManagementPage
+- /m/dashboard → MobileDashboard
+
+And update the sidebar/menu:
+
+- Add entries where appropriate:
+  - "Teklif Detay" will be navigated programmatically from list, no direct menu needed.
+  - "Teklif Kanban" under "Teklifler".
+  - "Performansım" for sales.
+  - "Ajanda" for calendar.
+  - "Uyarılar" for alerts.
+  - "Teklif Şablonu" and "Etiketler" under "Ayarlar" for admin.
+
+====================================================
+IMPORTANT: DO NOT BREAK EXISTING PAGES
+====================================================
+
+- Keep existing components working.
+- Only extend where needed.
+- Use the existing `api` object rather than creating new HTTP clients.
+
+At the end, ensure the app builds and runs with no TypeScript or ESLint errors.

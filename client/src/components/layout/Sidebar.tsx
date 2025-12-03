@@ -18,7 +18,9 @@ import {
   Shield,
   LineChart,
   FileSearch,
-  Smartphone
+  Smartphone,
+  Settings,
+  Map
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -135,6 +137,32 @@ export function Sidebar() {
       icon: Shield,
       href: '/teams',
       roles: ['admin']
+    },
+    // System Admin Section
+    {
+        title: 'Kullanıcı Yönetimi',
+        icon: Users,
+        href: '/system/users',
+        roles: ['system_admin']
+    },
+    {
+        title: 'Takım Yönetimi',
+        icon: Shield,
+        href: '/system/teams',
+        roles: ['system_admin']
+    },
+    {
+        title: 'Sistem Ayarları',
+        icon: Settings,
+        href: '/system/settings',
+        roles: ['system_admin']
+    },
+    // Reports
+    {
+        title: 'Bölge Haritası',
+        icon: Map,
+        href: '/reports/map',
+        roles: ['system_admin', 'admin', 'manager']
     }
   ];
 

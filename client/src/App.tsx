@@ -42,6 +42,14 @@ import PerformanceUsers from "@/pages/Performance/PerformanceUsers";
 import OfferTemplateSettings from "@/pages/Settings/OfferTemplateSettings";
 import SchoolDetail from "@/pages/SchoolDetail";
 
+import SystemUsersPage from "@/pages/system/SystemUsersPage";
+import UserFormPage from "@/pages/system/UserFormPage";
+import SystemTeamsPage from "@/pages/system/SystemTeamsPage";
+import TeamFormPage from "@/pages/system/TeamFormPage";
+import SystemSettingsPage from "@/pages/system/SystemSettingsPage";
+import RegionMapReportPage from "@/pages/reports/RegionMapReportPage";
+import OfferDetailPage from "@/pages/Offers/OfferDetailPage";
+
 // Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -96,6 +104,7 @@ function Router() {
       
       <Route path="/offers" element={<ProtectedRoute><OffersList /></ProtectedRoute>} />
       <Route path="/offers/new" element={<ProtectedRoute><OfferCreate /></ProtectedRoute>} />
+      <Route path="/offers/:id" element={<ProtectedRoute><OfferDetailPage /></ProtectedRoute>} />
       <Route path="/offers/:id/edit" element={<ProtectedRoute><OfferEdit /></ProtectedRoute>} />
 
       <Route path="/sales" element={<ProtectedRoute><SalesList /></ProtectedRoute>} />
@@ -105,11 +114,25 @@ function Router() {
       <Route path="/appointments" element={<ProtectedRoute><AppointmentsList /></ProtectedRoute>} />
       
       <Route path="/performance/me" element={<ProtectedRoute><MyPerformancePage /></ProtectedRoute>} />
-      <Route path="/performance/targets" element={<ProtectedRoute><RequireRole roles={['admin', 'manager']}><TargetsList /></RequireRole></ProtectedRoute>} />
-      <Route path="/performance/users" element={<ProtectedRoute><RequireRole roles={['admin', 'manager']}><PerformanceUsers /></RequireRole></ProtectedRoute>} />
+      <Route path="/performance/targets" element={<ProtectedRoute><RequireRole roles={['admin', 'manager', 'system_admin']}><TargetsList /></RequireRole></ProtectedRoute>} />
+      <Route path="/performance/users" element={<ProtectedRoute><RequireRole roles={['admin', 'manager', 'system_admin']}><PerformanceUsers /></RequireRole></ProtectedRoute>} />
       <Route path="/commissions" element={<ProtectedRoute><CommissionsPage /></ProtectedRoute>} />
       
-      <Route path="/settings/offer-template" element={<ProtectedRoute><RequireRole roles={['admin']}><OfferTemplateSettings /></RequireRole></ProtectedRoute>} />
+      <Route path="/settings/offer-template" element={<ProtectedRoute><RequireRole roles={['admin', 'system_admin']}><OfferTemplateSettings /></RequireRole></ProtectedRoute>} />
+
+      {/* System Admin Routes */}
+      <Route path="/system/users" element={<ProtectedRoute><RequireRole roles={['system_admin']}><SystemUsersPage /></RequireRole></ProtectedRoute>} />
+      <Route path="/system/users/new" element={<ProtectedRoute><RequireRole roles={['system_admin']}><UserFormPage /></RequireRole></ProtectedRoute>} />
+      <Route path="/system/users/:id/edit" element={<ProtectedRoute><RequireRole roles={['system_admin']}><UserFormPage /></RequireRole></ProtectedRoute>} />
+      
+      <Route path="/system/teams" element={<ProtectedRoute><RequireRole roles={['system_admin']}><SystemTeamsPage /></RequireRole></ProtectedRoute>} />
+      <Route path="/system/teams/new" element={<ProtectedRoute><RequireRole roles={['system_admin']}><TeamFormPage /></RequireRole></ProtectedRoute>} />
+      <Route path="/system/teams/:id/edit" element={<ProtectedRoute><RequireRole roles={['system_admin']}><TeamFormPage /></RequireRole></ProtectedRoute>} />
+      
+      <Route path="/system/settings" element={<ProtectedRoute><RequireRole roles={['system_admin']}><SystemSettingsPage /></RequireRole></ProtectedRoute>} />
+      
+      {/* Reports */}
+      <Route path="/reports/map" element={<ProtectedRoute><RequireRole roles={['system_admin', 'admin', 'manager']}><RegionMapReportPage /></RequireRole></ProtectedRoute>} />
 
       <Route path="/audit-logs" element={
         <ProtectedRoute>

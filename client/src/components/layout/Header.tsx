@@ -25,10 +25,21 @@ export function Header() {
 
   const getRoleColor = (role?: string) => {
     switch (role) {
+        case 'system_admin': return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
         case 'admin': return 'bg-red-100 text-red-800 hover:bg-red-200';
         case 'manager': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
         case 'sales': return 'bg-green-100 text-green-800 hover:bg-green-200';
         default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getRoleLabel = (role?: string) => {
+    switch (role) {
+        case 'system_admin': return 'Sistem Yönetici';
+        case 'admin': return 'Yönetici';
+        case 'manager': return 'Ekip Lideri';
+        case 'sales': return 'Satış';
+        default: return role;
     }
   };
 
@@ -74,7 +85,7 @@ export function Header() {
                 <span className="text-sm font-medium leading-none">{user?.name}</span>
                 {user?.role && (
                     <Badge variant="outline" className={`text-[10px] px-1 py-0 mt-1 border-0 ${getRoleColor(user.role)}`}>
-                        {user.role.toUpperCase()}
+                        {getRoleLabel(user.role)}
                     </Badge>
                 )}
               </div>

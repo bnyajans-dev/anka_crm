@@ -1,0 +1,658 @@
+You are an expert React + TypeScript + Tailwind + Vite engineer.
+
+We are building an internal CRM-like app called **Anka Travel CRM**.
+
+STACK (FRONTEND-ONLY for now):
+
+- React + TypeScript
+- TailwindCSS
+- Vite
+- A `mockApi.ts` file that exports a large `api` object with methods such as:
+  - api.auth.login
+  - api.users.list / getById / create / update / delete
+  - api.teams.list / getById / create / update / delete
+  - api.schools.list / getById / getSummary / create / update / delete
+  - api.visits.list / create / update / delete
+  - api.offers.list / create / update / delete / sendEmail
+  - api.offerTemplates.list / getById / update
+  - api.targets.list / create / update
+  - api.sales.list / create
+  - api.leaves.list / create
+  - api.announcements.list / create / delete
+  - api.appointments.list / create
+  - api.dashboard.getSummary / getCharts
+  - api.attachments.list / upload
+  - api.auditLogs.list
+  - api.performance.getSummary
+  - api.commissions.list
+  - api.pdf.generate
+
+There is already:
+
+- Layout with sidebar & header
+- React Router setup for some pages: /login, /dashboard, /schools, /visits, /offers, /sales, /appointments, /announcements, etc.
+- Role-based logic implemented somewhere (AuthContext / RequireRole / ProtectedRoute).
+
+====================================================
+PART 0 – NEW TOP-LEVEL ROLE: system_admin
+====================================================
+
+We currently have roles: 'admin' | 'manager' | 'sales'.
+
+We want to add a **super role**: 'system_admin'.
+
+1) Update the `Role` type:
+
+From:
+  export type Role = 'admin' | 'manager' | 'sales';
+
+To:
+  export type Role = 'system_admin' | 'admin' | 'manager' | 'sales';
+
+2) Update `MOCK_USERS` to include a system admin:
+
+Example:
+
+  let MOCK_USERS: User[] = [
+    { id: 1, name: 'System Admin', email: 'sysadmin@ankatravel.com', role: 'system_admin', is_active: true },
+    { id: 2, name: 'Admin User', email: 'admin@ankatravel.com', role: 'admin', is_active: true },
+    { id: 3, name: 'Manager User', email: 'manager@ankatravel.com', role: 'manager', team_id: 1, team_name: 'Sales Team A', is_active: true },
+    { id: 4, name: 'Sales User', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true },
+    ...
+  ];
+
+3) In `api.auth.login` mock, allow logging in as system admin using this email.
+
+4) In `filterByRole` helper in `mockApi.ts`:
+
+Currently:
+  if (currentUser.role === 'admin') return items;
+
+Change to:
+  if (currentUser.role === 'admin' || currentUser.role === 'system_admin') return items;
+
+So system_admin sees everything.
+
+5) In RBAC checks inside `mockApi.ts` (e.g. offers.update, targets.list, sales.list, etc.):
+
+- Add:
+
+  const isSystemAdmin = currentUser?.role === 'system_admin';
+
+- If isSystemAdmin is true, **skip** the usual owner/expired/locked restrictions and allow all actions.
+
+6) In the UI header/user badge, map roles to human-readable labels (Turkish):
+
+- system_admin → "Sistem Yönetici"
+- admin → "Yönetici"
+- manager → "Ekip Lideri"
+- sales → "Satış"
+
+====================================================
+PART 1 – SYSTEM ADMIN SCREENS & USER/TEAM MANAGEMENT
+====================================================
+
+Create a "System" section only for `system_admin` in the sidebar:
+
+- "Kullanıcı Yönetimi" → `/system/users`
+- "Takım Yönetimi" → `/system/teams`
+- "Sistem Ayarları" → `/system/settings`
+
+Use a RequireRole or similar to guard these routes to `system_admin` only.
+
+-----------------------------------------
+1.1 USERS MANAGEMENT – `/system/users`
+-----------------------------------------
+
+Create:
+
+- `src/pages/system/SystemUsersPage.tsx`
+- `src/pages/system/UserFormPage.tsx`
+
+Routes:
+
+- `/system/users` → list
+- `/system/users/new` → create
+- `/system/users/:id/edit` → edit
+
+Use ONLY `api.users.*` (no real HTTP fetch/axios).
+
+SystemUsersPage:
+
+- On mount: `const users = await api.users.list()`.
+- Display a table with:
+  - Name
+  - Email
+  - Role
+  - Team (team_name if available)
+  - is_active (badge)
+
+- "Yeni Kullanıcı" button → navigate to `/system/users/new`.
+
+- Row actions:
+  - "Düzenle" → `/system/users/:id/edit`
+  - "Sil" → `await api.users.delete(id);` then reload list.
+
+UserFormPage:
+
+- Detect mode: if `id` param exists → edit; else → create.
+- Fields:
+  - name
+  - email
+  - role (select: system_admin, admin, manager, sales)
+  - team_id (optional select from `api.teams.list()`)
+  - region? (optional string; see Part 4; we can include a simple text input)
+  - is_active (checkbox)
+
+- On submit:
+  - Create mode: `await api.users.create(formData); navigate('/system/users');`
+  - Edit mode: `await api.users.update(id, formData); navigate('/system/users');`
+
+This will fix any previous 404 issues by making sure we use `api.users.create` and navigate to an existing route (`/system/users`).
+
+-----------------------------------------
+1.2 TEAMS MANAGEMENT – `/system/teams`
+-----------------------------------------
+
+Create:
+
+- `src/pages/system/SystemTeamsPage.tsx`
+- `src/pages/system/TeamFormPage.tsx`
+
+Routes:
+
+- `/system/teams`
+- `/system/teams/new`
+- `/system/teams/:id/edit`
+
+Use `api.teams.*`.
+
+SystemTeamsPage:
+
+- List all teams (name, manager_name).
+- "Yeni Takım" button.
+- Edit/Delete actions.
+
+TeamFormPage:
+
+- Fields: name, manager_id (select from users).
+- Submit using `api.teams.create` or `api.teams.update`.
+
+-----------------------------------------
+1.3 SYSTEM SETTINGS – `/system/settings`
+-----------------------------------------
+
+Create `SystemSettingsPage` as a simple informational/settings hub:
+
+- Show cards explaining role definitions:
+  - system_admin vs admin vs manager vs sales
+- Provide links/buttons to:
+  - Offer Template Designer page (`/settings/offer-template`)
+  - Tag Management (`/settings/tags`)
+  - Region Map Report (`/reports/map`)
+
+====================================================
+PART 2 – PERSON-BASED TARGETS (NOT TEAM-BASED STORAGE)
+====================================================
+
+We have `SalesTarget`:
+
+  interface SalesTarget {
+    id: number;
+    user_id: number;
+    period_type: 'month' | 'year';
+    period_year: number;
+    period_month?: number;
+    visit_target: number;
+    offer_target: number;
+    deal_target: number;
+    revenue_target: number;
+    created_by_user_id: number;
+  }
+
+This is ALREADY person-based. We MUST keep it that way.
+
+No separate TeamTarget entity; any team-level view should be computed from summing user-level targets and progress.
+
+UI requirements:
+
+1) Targets Management Page `/performance/targets`
+
+- Only visible to roles: system_admin, admin, manager.
+- Left column: table/list of users:
+  - Columns: name, role, team, region (if exists).
+- Right column: when a user is selected:
+  - Show a form for their monthly target:
+    - year
+    - month
+    - visit_target
+    - offer_target
+    - deal_target
+    - revenue_target
+  - Use `api.targets.list(userId, year, month)`, `api.targets.create`, `api.targets.update`.
+
+- Manager can see and edit targets only for their team's users.
+- Admin/system_admin can see and edit targets for all users.
+
+2) Team Performance Overview Page `/performance/users` (or similar):
+
+- Each row is a **user** with:
+  - user_name
+  - team_name
+  - visits_percent
+  - offers_percent
+  - deals_percent
+  - revenue_percent
+
+- Optionally add a "Team summary" row at the bottom, aggregating numbers for that team.
+
+3) My Performance Page `/me/performance` (for sales role):
+
+- Uses `api.performance.getSummary(currentUser.id?)` and/or `api.targets.list` for current user.
+- Show 4 cards:
+  - Visits: count vs target (progress bar)
+  - Offers: count vs target
+  - Deals: count vs target
+  - Revenue: revenue vs target
+
+- Add a "AI Satış Koçu" box:
+  - Generate a textual suggestion based on how far behind/ahead the user is (no real AI needed, just conditions).
+
+====================================================
+PART 3 – REGIONS & MAP-BASED REPORT
+====================================================
+
+We want region fields and a map-based report.
+
+1) Extend `School` type (frontend only):
+
+Add optional fields:
+
+  region?: string;      // e.g. 'İstanbul Anadolu', 'İstanbul Avrupa', 'Marmara'
+  latitude?: number;
+  longitude?: number;
+
+Update MOCK_SCHOOLS to include simple demo data for these fields (a few schools with coordinates in Turkey).
+
+2) Optionally extend User type:
+
+  region?: string;      // region the salesperson is primarily responsible for
+
+Add `region` field to UserFormPage so a region can be assigned to a user (simple text input or fixed list).
+
+3) Region Map Report Page – `/reports/map`
+
+Create:
+
+- `src/pages/reports/RegionMapReportPage.tsx`
+- Route: `/reports/map`
+- Allowed roles: system_admin, admin, manager.
+
+Data sources:
+
+- `const schools = await api.schools.list();`
+- `const visits = await api.visits.list();`
+- `const offers = await api.offers.list();`
+- `const sales = await api.sales.list();`
+
+Filter UI:
+
+- Date range selector (from/to).
+- Data type selector:
+  - "Ziyaretler"
+  - "Teklifler"
+  - "Satışlar"
+- Region selector (dropdown: distinct `region` values from schools).
+- City selector (optional).
+
+Map UI (React Leaflet or any simple map lib):
+
+- For each school that has lat/lng and passes the region/city filter:
+  - Calculate counts for the selected data type in the date range:
+    - visitsCount, offersCount, salesCount, totalRevenue.
+  - Place a marker.
+  - Marker tooltip/popup:
+    - school_name
+    - region / city / district
+    - counts (e.g. "Bu dönemde 3 ziyaret, 2 teklif, 1 satış, 60.000₺ ciro")
+    - link to `/schools/:id/360` (School 360 page).
+
+Summary panel (right side on desktop, below on mobile):
+
+- Show total stats for current filter:
+  - number of schools
+  - total visits
+  - total offers
+  - total sales
+  - total revenue
+
+- Show a "Top Regions" list:
+  - e.g. array of { region, totalRevenue } sorted desc.
+
+Add menu item under a "Raporlar" or similar group:
+
+- "Bölge Haritası" → `/reports/map`
+
+Visible only to system_admin, admin, manager.
+
+====================================================
+PART 4 – COMPLETE MISSING UI SCREENS (FRONTEND ONLY)
+====================================================
+
+Use the existing `api` mock object. Do not introduce real HTTP endpoints.
+
+Create/complete the following pages and routes.
+
+-----------------------------------------
+4.1 OFFER DETAIL PAGE – `/offers/:id`
+-----------------------------------------
+
+Component: `src/pages/offers/OfferDetailPage.tsx`
+
+- Fetch offer by id (either add `api.offers.getById(id)` or fetch all and find).
+- Show:
+  - school_name
+  - tour_name
+  - student_count / teacher_count
+  - price_per_student, total_price, currency
+  - valid_until
+  - status badge
+  - contact_name, contact_email
+  - owner (user_name)
+
+Actions:
+
+- Edit: link to existing offer edit page; disable if locked/expired.
+- "PDF Oluştur / Önizle": call `api.pdf.generate(offer.id)` and open URL.
+- "Teklifi Gönder (E-posta)":
+  - Disabled if no contact_email.
+  - Confirm dialog.
+  - Call `api.offers.sendEmail(offer.id, { ... })`.
+  - Show toast and update last_sent_at / last_sent_status in UI.
+
+Linked info:
+
+- Related sale: use `api.sales.list()` and find sale with offer_id.
+- Related appointments: use `api.appointments.list()` and filter by school_id/user_id.
+- Related attachments: `api.attachments.list('offer', offer.id)`.
+
+Add back button to offers list.
+
+-----------------------------------------
+4.2 OFFER TEMPLATE DESIGNER – `/settings/offer-template`
+-----------------------------------------
+
+Component: `OfferTemplatePage`.
+
+- Use `api.offerTemplates.list()`, take the default (`is_default = true` or first).
+- Inputs:
+  - email_subject_template
+  - email_body_template
+  - pdf_header_template
+  - pdf_footer_template
+
+- Show a help box with supported placeholders:
+  - {{school_name}}, {{contact_name}}, {{tour_name}},
+  - {{student_count}}, {{teacher_count}},
+  - {{price_per_student}}, {{total_price}},
+  - {{currency}}, {{valid_until}},
+  - {{salesperson_name}}, {{today}}
+
+- "Preview" box: render sample subject/body by replacing placeholders with fake values.
+- "Kaydet" button → `api.offerTemplates.update(id, updatedData)`.
+
+Admin/system_admin only.
+
+-----------------------------------------
+4.3 SCHOOL 360° VIEW – `/schools/:id/360`
+-----------------------------------------
+
+Component: `School360Page`.
+
+- Use `api.schools.getSummary(id)` which returns:
+  - school info
+  - visits, offers, sales, appointments, attachments
+
+Layout:
+
+- Top: school info (name, city, district, contact person/phone, region).
+- Tabs or stacked sections:
+  - Visits (list with date, salesperson, status, notes)
+  - Offers (list with status, total_price, valid_until, link to offer detail)
+  - Sales (closed_date, amount, payment_status)
+  - Appointments (start/end, type, status)
+  - Attachments (file_name, type)
+
+- Show "School Health" widget:
+  - Compute a simple risk score based on counts:
+    - Many recent visits/offers/sales → high score (healthy)
+    - Little or no activity → low score (risky)
+  - Display as 0–100 badge with labels ("Sağlıklı", "Orta", "Riskli").
+
+-----------------------------------------
+4.4 OFFERS KANBAN BOARD – `/offers/kanban`
+-----------------------------------------
+
+Component: `OffersKanbanPage`.
+
+- Use `api.offers.list()` and group by status:
+  - draft, sent, negotiation, accepted, rejected.
+
+- Show columns with cards:
+  - Each card: tour_name, school_name, total_price+currency, user_name, valid_until.
+
+- Allow changing status:
+  - Either via dropdown on each card, or simple buttons like "→ Negotiation".
+  - On change, call `api.offers.update(id, { status: newStatus })`.
+  - Respect mock RBAC/locking (catch errors and show message).
+
+-----------------------------------------
+4.5 ALERTS CENTER – `/alerts`
+-----------------------------------------
+
+Component: `AlertsPage`.
+
+No backend endpoint; compute alerts on the frontend using:
+
+- `api.offers.list()`
+- `api.visits.list()`
+- `api.appointments.list()`
+- `api.performance.getSummary` or `api.targets.list` for the current user.
+
+Alert types:
+
+1. Expiring offers:
+   - valid_until within next 3 days, status not accepted/rejected.
+
+2. Cold schools:
+   - schools with no visit in last ~90 days (approximate with Date).
+
+3. Behind target (for sales):
+   - If performance summary shows <50% of target and date in month >50%.
+
+UI:
+
+- Sections:
+  - "Süresi Dolmak Üzere Olan Teklifler"
+  - "Uzun Süredir Ziyaret Edilmeyen Okullar"
+  - "Hedef Gerisinde Olan Performans"
+
+- Each alert item has a link to the relevant page (offer detail, school 360, performance).
+
+Also:
+
+- In the global header, add a bell icon with a badge showing total alert count; clicking goes to `/alerts`.
+
+-----------------------------------------
+4.6 MY PERFORMANCE PAGE – `/me/performance`
+-----------------------------------------
+
+Component: `MyPerformancePage`.
+
+- For current user (especially role 'sales').
+- Use `api.performance.getSummary(currentUser.id?)` and optionally `api.targets.list`.
+
+UI:
+
+- 4 cards with progress bars:
+  - Ziyaretler (count/target)
+  - Teklifler
+  - Satışlar
+  - Ciro
+
+- "AI Satış Koçu" section:
+  - If behind target, show advice text.
+  - If on track, show encouragement text.
+  - No real AI required; conditional text is enough.
+
+-----------------------------------------
+4.7 APPOINTMENTS CALENDAR – `/calendar`
+-----------------------------------------
+
+Component: `CalendarPage`.
+
+- Use `api.appointments.list()`.
+
+UI:
+
+- Two modes: "Liste" and "Takvim" (simple grouped-by-day view).
+- Group appointments by date:
+  - Show start/end time, school_name, type, status, is_auto_created badge.
+
+-----------------------------------------
+4.8 ANNOUNCEMENTS – `/announcements` (ENHANCED)
+-----------------------------------------
+
+Admin/system_admin view:
+
+- List all announcements:
+  - title, type, audience_type, created_at, expires_at.
+- Form/modal to create new announcement.
+- Delete button to remove.
+
+Sales/manager view:
+
+- Read-only list.
+- Highlight announcements that are "new" based on created_at vs last seen time (can store lastSeen in localStorage).
+
+-----------------------------------------
+4.9 TAGS & SEGMENTS (FRONTEND-ONLY) – `/settings/tags`
+-----------------------------------------
+
+Implement a simple frontend-only TagContext to manage tags and school-tag assignments.
+
+- Tag: { id: string; name: string; color: string; }
+- schoolTags: { schoolId: number; tagIds: string[]; }
+
+Expose functions:
+- addTag, deleteTag, assignTagToSchool, removeTagFromSchool.
+
+Wrap the app with <TagProvider>.
+
+Pages:
+
+1) Tag Management Page `/settings/tags` (system_admin/admin only):
+
+- List tags, add new tag (name + Tailwind color string), delete tag.
+
+2) School detail / School 360:
+
+- Show assigned tags as colored pills.
+- Allow adding/removing tags via TagContext.
+
+3) School list:
+
+- Add filter by tag at the top: show only schools that have selected tag(s).
+
+-----------------------------------------
+4.10 FAKE AI WIDGETS
+-----------------------------------------
+
+Implement small "AI-like" helper widgets with purely local logic:
+
+A) On visit detail/list item:
+- Button: "AI’den Teklif Öner"
+- On click, open a modal with a generated suggestion (tour name + rough price) based on school/notes.
+
+B) On School 360:
+- Show "Risk Skoru" computed from counts of visits/offers/sales.
+
+C) On My Performance:
+- "AI Satış Koçu" as described.
+
+-----------------------------------------
+4.11 MOBILE PWA DASHBOARD – `/m/dashboard`
+-----------------------------------------
+
+Component: `MobileDashboard`.
+
+- Route: `/m/dashboard`
+- Mobile-first layout.
+
+Use:
+
+- `api.appointments.list()`
+- `api.offers.list()`
+- `api.dashboard.getSummary()`
+
+Sections:
+
+1. Today's appointments (list for today).
+2. Quick actions (large buttons):
+  - Okul Ara → /schools
+  - Ziyaret Ekle → visit create page
+  - Teklif Oluştur → offer create page
+3. Short summary from dashboard summary:
+  - e.g. this month visits/offers/sales.
+4. Cold schools (2–3 names with no recent visits).
+
+Make the UI touch-friendly with larger buttons and spacing.
+
+====================================================
+PART 5 – ROUTING & NAVIGATION SUMMARY
+====================================================
+
+Ensure React Router has routes for all:
+
+- System admin:
+  - /system/users
+  - /system/users/new
+  - /system/users/:id/edit
+  - /system/teams
+  - /system/teams/new
+  - /system/teams/:id/edit
+  - /system/settings
+
+- Targets & performance:
+  - /performance/targets
+  - /performance/users (or similar)
+  - /me/performance
+
+- Offers:
+  - /offers/:id (detail)
+  - /offers/kanban
+
+- Schools:
+  - /schools/:id/360
+
+- Reports:
+  - /reports/map
+
+- Alerts:
+  - /alerts
+
+- Settings:
+  - /settings/offer-template
+  - /settings/tags
+
+- Appointments:
+  - /calendar
+
+- Mobile:
+  - /m/dashboard
+
+Guard routes with role-based protection where appropriate.
+
+Do NOT break existing pages; only add/extend.
+
+Make sure everything compiles with TypeScript and runs under the current mockApi-based setup.

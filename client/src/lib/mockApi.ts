@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 // --- TYPES ---
 
-export type Role = 'admin' | 'manager' | 'sales';
+export type Role = 'system_admin' | 'admin' | 'manager' | 'sales';
 
 export interface User {
   id: number;
@@ -12,6 +12,7 @@ export interface User {
   team_id?: number;
   team_name?: string;
   is_active: boolean;
+  region?: string;
 }
 
 export interface School {
@@ -22,6 +23,9 @@ export interface School {
   type: 'public' | 'private';
   contact_person?: string;
   contact_phone?: string;
+  region?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Visit {
@@ -201,11 +205,14 @@ let MOCK_USERS: User[] = [
   { id: 2, name: 'Manager User', email: 'manager@ankatravel.com', role: 'manager', team_id: 1, team_name: 'Sales Team A', is_active: true },
   { id: 3, name: 'Sales Person', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true },
   { id: 4, name: 'Another Sales', email: 'sales2@ankatravel.com', role: 'sales', team_id: 2, team_name: 'Sales Team B', is_active: true },
+  { id: 5, name: 'System Admin', email: 'sysadmin@ankatravel.com', role: 'system_admin', is_active: true },
 ];
 
 let MOCK_SCHOOLS: School[] = [
-  { id: 1, name: 'Atatürk Anadolu Lisesi', city: 'Ankara', district: 'Çankaya', type: 'public', contact_person: 'Ahmet Yılmaz' },
-  { id: 2, name: 'Özel Bilgi Koleji', city: 'İstanbul', district: 'Kadıköy', type: 'private', contact_person: 'Ayşe Demir' },
+  { id: 1, name: 'Atatürk Anadolu Lisesi', city: 'Ankara', district: 'Çankaya', type: 'public', contact_person: 'Ahmet Yılmaz', region: 'İç Anadolu', latitude: 39.9208, longitude: 32.8541 },
+  { id: 2, name: 'Özel Bilgi Koleji', city: 'İstanbul', district: 'Kadıköy', type: 'private', contact_person: 'Ayşe Demir', region: 'Marmara', latitude: 40.9829, longitude: 29.0287 },
+  { id: 3, name: 'İzmir Fen Lisesi', city: 'İzmir', district: 'Bornova', type: 'public', contact_person: 'Mehmet Kaya', region: 'Ege', latitude: 38.4622, longitude: 27.2163 },
+  { id: 4, name: 'Antalya Anadolu Lisesi', city: 'Antalya', district: 'Muratpaşa', type: 'public', contact_person: 'Zeynep Çelik', region: 'Akdeniz', latitude: 36.8848, longitude: 30.7040 },
 ];
 
 let MOCK_VISITS: Visit[] = [
@@ -279,7 +286,7 @@ const filterByRole = <T extends { user_id?: number; closed_by_user_id?: number; 
   user: User,
   userField: keyof T = 'user_id' as keyof T
 ): T[] => {
-  if (user.role === 'admin') return data;
+  if (user.role === 'admin' || user.role === 'system_admin') return data;
   if (user.role === 'sales') {
     return data.filter(item => item[userField] === user.id);
   }
@@ -297,7 +304,21 @@ export const api = {
   users: {
     list: async (): Promise<User[]> => { await delay(300); return [...MOCK_USERS]; },
     getById: async (id: number): Promise<User> => { await delay(200); return MOCK_USERS.find(u => u.id === id)!; },
-    update: async (id: number, data: any) => { await delay(300); return data; }, // Mock update
+    create: async (data: any) => { await delay(300); MOCK_USERS.push({ ...data, id: Math.random() }); return data; },
+    update: async (id: number, data: any) => { 
+      await delay(300); 
+      const idx = MOCK_USERS.findIndex(u => u.id === id);
+      if (idx !== -1) MOCK_USERS[idx] = { ...MOCK_USERS[idx], ...data };
+      return data; 
+    }, 
+    delete: async (id: number) => { await delay(300); MOCK_USERS = MOCK_USERS.filter(u => u.id !== id); },
+  },
+  teams: {
+    list: async (): Promise<any[]> => { await delay(300); return [{ id: 1, name: 'Sales Team A', manager_id: 2, manager_name: 'Manager User' }, { id: 2, name: 'Sales Team B', manager_id: 0, manager_name: 'None' }]; },
+    getById: async (id: number) => { await delay(200); return { id, name: 'Sales Team A', manager_id: 2 }; }, // Mock
+    create: async (data: any) => { await delay(300); return data; },
+    update: async (id: number, data: any) => { await delay(300); return data; },
+    delete: async (id: number) => { await delay(300); }
   },
   schools: {
     list: async (): Promise<School[]> => { await delay(300); return [...MOCK_SCHOOLS]; },
@@ -366,17 +387,22 @@ export const api = {
 
       // Check RBAC for update
       if (currentUser) {
-         const isOwner = offer.user_id === currentUser.id;
-         const isPast = offer.valid_until ? new Date(offer.valid_until) < new Date() : false;
-         const isLocked = ['accepted', 'rejected'].includes(offer.status);
+         const isSystemAdmin = currentUser.role === 'system_admin';
+         if (isSystemAdmin) {
+             // Bypass checks
+         } else {
+            const isOwner = offer.user_id === currentUser.id;
+            const isPast = offer.valid_until ? new Date(offer.valid_until) < new Date() : false;
+            const isLocked = ['accepted', 'rejected'].includes(offer.status);
 
-         if (currentUser.role === 'sales') {
-            if (!isOwner) throw new Error("Permission denied: Not owner");
-            if (isPast) throw new Error("Permission denied: Offer expired");
-            if (isLocked) throw new Error("Permission denied: Offer is locked");
-         } else if (currentUser.role === 'manager') {
-            // Manager logic (simplified for mock)
-            if (isPast || isLocked) throw new Error("Permission denied: Offer expired or locked");
+            if (currentUser.role === 'sales') {
+                if (!isOwner) throw new Error("Permission denied: Not owner");
+                if (isPast) throw new Error("Permission denied: Offer expired");
+                if (isLocked) throw new Error("Permission denied: Offer is locked");
+            } else if (currentUser.role === 'manager') {
+                // Manager logic (simplified for mock)
+                if (isPast || isLocked) throw new Error("Permission denied: Offer expired or locked");
+            }
          }
       }
 
@@ -497,7 +523,7 @@ export const api = {
             .map(u => u.id);
           filtered = filtered.filter(t => teamUserIds.includes(t.user_id));
         }
-        // Admin sees all unless userId filter is provided
+        // Admin and System Admin sees all unless userId filter is provided
       }
 
       if (userId) filtered = filtered.filter(t => t.user_id === userId);

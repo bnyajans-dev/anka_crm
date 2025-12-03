@@ -4,6 +4,7 @@ import { api, SalesTarget } from '@/lib/mockApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { Sparkles, TrendingUp, AlertCircle } from 'lucide-react';
 
 export default function MyPerformancePage() {
   const { user } = useAuth();
@@ -40,11 +41,34 @@ export default function MyPerformancePage() {
   ];
 
   const revenuePercent = Math.min(100, Math.floor((actuals.revenue / target.revenue_target) * 100));
+  
+  // AI Coach Logic
+  let aiMessage = "";
+  if (revenuePercent < 50) {
+      aiMessage = "Ayın ortasındayız ancak ciro hedefinin henüz %50'sinin altındasın. Ziyaret sayını artırarak teklif havuzunu genişletmeni öneririm.";
+  } else if (revenuePercent >= 50 && revenuePercent < 80) {
+      aiMessage = "İyi gidiyorsun! Hedefine ulaşmak için bekleyen teklifleri takibe al ve kapanışa odaklan.";
+  } else {
+      aiMessage = "Harika performans! Hedefini aşmak üzeresin. Bu tempoyu koru ve gelecek ay için pipeline oluşturmaya başla.";
+  }
 
   return (
     <div className="space-y-6 animate-in fade-in">
       <h1 className="text-3xl font-bold tracking-tight">Performansım</h1>
       
+      {/* AI Coach Box */}
+      <Card className="bg-gradient-to-r from-violet-50 to-indigo-50 border-indigo-100">
+        <CardContent className="p-4 flex gap-4 items-start">
+            <div className="p-2 bg-white rounded-full shadow-sm text-indigo-600">
+                <Sparkles className="h-6 w-6" />
+            </div>
+            <div>
+                <h3 className="font-bold text-indigo-900">AI Satış Koçu</h3>
+                <p className="text-indigo-800 text-sm mt-1">{aiMessage}</p>
+            </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Ciro Hedefi</CardTitle></CardHeader>
