@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
 import logo from '@assets/generated_images/minimalist_phoenix_logo_for_anka_travel.png';
 
 const loginSchema = z.object({
@@ -19,6 +20,7 @@ const loginSchema = z.object({
 export default function Login() {
   const { t } = useTranslation();
   const { login } = useAuth();
+  const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -33,8 +35,18 @@ export default function Login() {
     try {
       setError(null);
       await login(values.email, values.password);
+      toast({
+        title: "Success",
+        description: "Logged in successfully",
+      });
     } catch (err) {
+      console.error(err);
       setError('Invalid email or password');
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
+      });
     }
   };
 
