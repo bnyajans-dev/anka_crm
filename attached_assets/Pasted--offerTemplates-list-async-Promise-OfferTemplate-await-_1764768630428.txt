@@ -1,0 +1,250 @@
+  offerTemplates: {
+    list: async (): Promise<OfferTemplate[]> => {
+      await delay(300);
+      return [...MOCK_OFFER_TEMPLATES];
+    },
+    getById: async (id: number) => {
+      await delay(200);
+      return MOCK_OFFER_TEMPLATES.find(t => t.id === id);
+    },
+    update: async (id: number, data: any) => {
+      await delay(300);
+      const idx = MOCK_OFFER_TEMPLATES.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        MOCK_OFFER_TEMPLATES[idx] = { ...MOCK_OFFER_TEMPLATES[idx], ...data };
+      }
+    }
+  },
+  targets: {
+    list: async (userId?: number, year?: number, month?: number): Promise<SalesTarget[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      let filtered = MOCK_SALES_TARGETS;
+
+      if (currentUser) {
+        if (currentUser.role === 'sales') {
+          // Sales sees only their own
+          filtered = filtered.filter(t => t.user_id === currentUser.id);
+        } else if (currentUser.role === 'manager') {
+          // Manager sees team
+          const teamUserIds = MOCK_USERS
+            .filter(u => u.team_id === currentUser.team_id)
+            .map(u => u.id);
+          filtered = filtered.filter(t => teamUserIds.includes(t.user_id));
+        }
+        // Admin sees all unless userId filter is provided
+      }
+
+      if (userId) filtered = filtered.filter(t => t.user_id === userId);
+      if (year) filtered = filtered.filter(t => t.period_year === year);
+      if (month) filtered = filtered.filter(t => t.period_month === month);
+
+      return filtered.map(t => ({
+        ...t,
+        user_name: MOCK_USERS.find(u => u.id === t.user_id)?.name,
+      }));
+    },
+    create: async (data: any): Promise<SalesTarget> => {
+      await delay(300);
+      const newTarget: SalesTarget = {
+        ...data,
+        id: Math.random(),
+        created_by_user_id: 1,
+      };
+      MOCK_SALES_TARGETS.push(newTarget);
+      return newTarget;
+    },
+    update: async (id: number, data: any) => {
+      await delay(300);
+      const idx = MOCK_SALES_TARGETS.findIndex(t => t.id === id);
+      if (idx !== -1) {
+        MOCK_SALES_TARGETS[idx] = { ...MOCK_SALES_TARGETS[idx], ...data };
+      }
+    },
+  },
+  sales: {
+    list: async (): Promise<Sale[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      let filteredSales = MOCK_SALES;
+      if (currentUser) filteredSales = filterByRole(MOCK_SALES, currentUser, 'closed_by_user_id');
+
+      return filteredSales.map(s => {
+        const offer = MOCK_OFFERS.find(o => o.id === s.offer_id);
+        const school = offer ? MOCK_SCHOOLS.find(sch => sch.id === offer.school_id) : null;
+        return {
+          ...s,
+          offer_tour_name: offer?.tour_name,
+          school_name: school?.name,
+          user_name: MOCK_USERS.find(u => u.id === s.closed_by_user_id)?.name,
+        };
+      });
+    },
+    create: async (data: any) => {
+      await delay(300);
+      MOCK_SALES.push({ ...data, id: Math.random() });
+    },
+  },
+  leaves: {
+    list: async (): Promise<LeaveRequest[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      let filteredLeaves = MOCK_LEAVES;
+      if (currentUser) filteredLeaves = filterByRole(MOCK_LEAVES, currentUser);
+
+      return filteredLeaves.map(l => ({
+        ...l,
+        user_name: MOCK_USERS.find(u => u.id === l.user_id)?.name,
+      }));
+    },
+    create: async (data: any) => {
+      await delay(300);
+      MOCK_LEAVES.push({ ...data, id: Math.random() });
+    },
+    updateStatus: async (id: number, status: any) => {
+      await delay(300);
+      // mock
+    },
+  },
+  announcements: {
+    list: async (): Promise<Announcement[]> => {
+      await delay(200);
+      return [...MOCK_ANNOUNCEMENTS];
+    },
+    create: async (data: any) => {
+      await delay(300);
+      MOCK_ANNOUNCEMENTS.push({ ...data, id: Math.random() });
+    },
+    delete: async (id: number) => {
+      await delay(300);
+      MOCK_ANNOUNCEMENTS = MOCK_ANNOUNCEMENTS.filter(a => a.id !== id);
+    },
+  },
+  appointments: {
+    list: async (): Promise<Appointment[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      let filteredAppts = MOCK_APPOINTMENTS;
+      if (currentUser) filteredAppts = filterByRole(MOCK_APPOINTMENTS, currentUser);
+
+      return filteredAppts.map(a => ({
+        ...a,
+        school_name: MOCK_SCHOOLS.find(s => s.id === a.school_id)?.name,
+        user_name: MOCK_USERS.find(u => u.id === a.user_id)?.name,
+      }));
+    },
+    create: async (data: any) => {
+      await delay(300);
+      MOCK_APPOINTMENTS.push({ ...data, id: Math.random() });
+    },
+  },
+  dashboard: {
+    getSummary: async (): Promise<DashboardSummary> => {
+      await delay(500);
+      const currentUser = getCurrentUser();
+
+      let multiplier = 1;
+      if (currentUser?.role === 'manager') multiplier = 0.5;
+      if (currentUser?.role === 'sales') multiplier = 0.2;
+
+      return {
+        total_schools: MOCK_SCHOOLS.length,
+        total_visits: Math.floor(MOCK_VISITS.length * multiplier),
+        total_offers: Math.floor(MOCK_OFFERS.length * multiplier),
+        total_sales: Math.floor(MOCK_SALES.length * multiplier),
+        total_revenue: Math.floor(
+          MOCK_SALES.reduce((acc, curr) => acc + curr.final_revenue_amount, 0) * multiplier
+        ),
+        upcoming_appointments_count: Math.floor(MOCK_APPOINTMENTS.length * multiplier),
+      };
+    },
+    getCharts: async () => {
+      await delay(500);
+      return {
+        visits_per_day: [
+          { date: '01/10', count: 2 },
+          { date: '02/10', count: 5 },
+          { date: '03/10', count: 3 },
+          { date: '04/10', count: 7 },
+          { date: '05/10', count: 4 },
+          { date: '06/10', count: 6 },
+        ],
+        revenue_per_month: [
+          { month: 'Jun', amount: 50000 },
+          { month: 'Jul', amount: 75000 },
+          { month: 'Aug', amount: 40000 },
+          { month: 'Sep', amount: 90000 },
+          { month: 'Oct', amount: 120000 },
+        ],
+        offers_by_status: [
+          { name: 'Draft', value: 5 },
+          { name: 'Sent', value: 10 },
+          { name: 'Accepted', value: 3 },
+          { name: 'Rejected', value: 1 },
+        ],
+        top_schools: [
+          { name: 'Atatürk Anadolu', revenue: 60000 },
+          { name: 'Fen Lisesi', revenue: 45000 },
+          { name: 'Kolej A', revenue: 30000 },
+        ],
+      };
+    },
+  },
+  attachments: {
+    list: async (relatedType: string, relatedId: number): Promise<Attachment[]> => {
+      await delay(300);
+      return MOCK_ATTACHMENTS.filter(
+        a => a.related_type === relatedType && a.related_id === relatedId
+      );
+    },
+    upload: async (data: any): Promise<Attachment> => {
+      await delay(800);
+      const newAtt: Attachment = {
+        id: Math.random(),
+        ...data,
+        file_url: 'https://via.placeholder.com/150',
+        uploaded_at: new Date().toISOString(),
+        uploaded_by_user_id: 1,
+      };
+      MOCK_ATTACHMENTS.push(newAtt);
+      return newAtt;
+    },
+  },
+  auditLogs: {
+    list: async (): Promise<AuditLog[]> => {
+      await delay(400);
+      return [...MOCK_AUDIT_LOGS];
+    },
+  },
+  performance: {
+    getSummary: async (userId?: number): Promise<PerformanceSummary> => {
+      await delay(500);
+      return {
+        visits_count: 12,
+        visits_target: 20,
+        offers_count: 5,
+        offers_target: 10,
+        deals_count: 2,
+        deals_target: 5,
+        revenue_sum: 120000,
+        revenue_target: 200000,
+      };
+    },
+  },
+  commissions: {
+    list: async (): Promise<Commission[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      if (currentUser?.role === 'sales') {
+        return MOCK_COMMISSIONS.filter(c => c.user_id === currentUser.id);
+      }
+      return [...MOCK_COMMISSIONS];
+    },
+  },
+  pdf: {
+    generate: async (offerId: number): Promise<string> => {
+      await delay(1500);
+      return 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    },
+  },
+};
