@@ -1,0 +1,214 @@
+You are an expert full-stack architect.
+We have an Anka Travel CRM with:
+
+- Backend: Node.js + TypeScript + Express + PostgreSQL + ORM
+- Frontend: React + TypeScript + Tailwind
+- RBAC roles: admin, manager, sales
+- Modules: users, teams, schools, visits, offers, sales, appointments, performance, commissions
+- Targets model partially implemented
+- Dashboard and PWA/mobile structure available
+
+Now implement **a full TARGET & COMMISSION SYSTEM** PLUS a new SALES WORKFLOW:
+
+===========================================================
+PART 1 — TARGET & EARNINGS SYSTEM (RBAC-ENFORCED)
+===========================================================
+
+### BACKEND
+
+Ensure/implement sales_targets table:
+
+sales_targets:
+- id (uuid)
+- user_id (FK users)
+- period_type ('month'|'year')
+- period_year
+- period_month
+- visit_target
+- offer_target
+- deal_target
+- revenue_target
+- created_by_user_id (FK users)
+- created_at, updated_at
+
+### Target Endpoints
+
+1) POST /api/performance/targets  
+   - admin: can set target for ANY user  
+   - manager: can set target ONLY for their team  
+   - sales: FORBIDDEN  
+
+2) PUT /api/performance/targets/:id  
+   same rules as above.
+
+3) GET /api/performance/targets?userId=&year=&month=  
+   - admin: can request any
+   - manager: only team users
+   - sales: FORBIDDEN
+
+4) GET /api/performance/my-targets?year=&month=  
+   Returns:
+   - logged-in user's target (ignore userId param)
+   - visit/offer/deal/revenue progress
+   - percentages
+
+### COMMISSION RULES ENDPOINTS
+
+Already exist but must enforce RBAC:
+
+- GET /api/commissions → admin + manager (team only)
+- GET /api/commissions/my → sales only
+
+===========================================================
+PART 2 — OFFER WORKFLOW UPGRADE:
+"ACCEPTED OFFER → AUTO-SALE CREATION → CALENDAR ENTRY"
+===========================================================
+
+We want:
+
+1) When an offer.status changes to 'accepted':
+   - Automatically create a new sale record.
+   - Automatically create a calendar appointment.
+   - Update offer.status to 'accepted' and lock it (sales cannot revert).
+   - Only admin/manager can manually override if needed.
+
+### BACKEND Changes
+
+Modify PUT /api/offers/:id:
+
+- Detect when body.status === 'accepted' AND previous status != 'accepted':
+  - Create a new sale:
+    Sales table fields:
+    - offer_id
+    - closed_by_user_id = req.user.id
+    - closed_date = now
+    - final_revenue_amount = offer.total_price
+    - currency = offer.currency
+    - payment_status = 'pending'
+  - Assign created sale.id
+
+- Create an appointment automatically:
+  Appointments:
+  - type: 'sale_followup'
+  - user_id: offer.user_id
+  - school_id: offer.school_id
+  - start_datetime: now + 1 day (default followup)
+  - end_datetime: start_datetime + 1 hour
+  - status: 'planned'
+  - notes: "Otomatik: Teklif kabul edildi → Satış oluşturuldu."
+
+- Save appointment to DB.
+
+- Return response:
+  {
+    success: true,
+    data: {
+      offer: ...updatedOffer,
+      sale: ...newSale,
+      appointment: ...newAppointment
+    }
+  }
+
+- Prevent any user with role 'sales' from later changing an 'accepted' offer's status.
+  Allow only admin/manager ROM (override).
+
+### Ensure sales_created event is logged in audit_logs:
+- action: "OFFER_ACCEPTED_TO_SALE"
+- entity_type: "offer"
+- entity_id: offer.id
+- changes: { sale_id, appointment_id }
+
+===========================================================
+PART 3 — FRONTEND WORKFLOW (ADMIN PANEL + SALES PANEL)
+===========================================================
+
+### OFFER EDIT PAGE
+
+When user (admin/manager/sales) updates offer:
+
+- If status is changed to “accepted”:
+  - Show confirmation modal:
+    “Teklif kabul edildi. Yeni satış kaydı oluşturulacak ve ajandaya otomatik işlenecek.”
+  - After submit:
+    - Show toast.success("Teklif kabul edildi, satış oluşturuldu.")
+    - Display newly created sale info.
+    - Show link: “Satışa Git” → /sales/:id
+
+- For sales users:
+  - Status select must be disabled AFTER accepted.
+
+### SALES PAGE
+
+Enhance /sales page:
+- New sales will automatically appear.
+- Add “created_from_offer” badge.
+- Add filter: “Kaynağı: Teklif / Manuel”.
+
+### APPOINTMENTS PAGE
+
+When an auto-created appointment exists:
+
+- Add badge: “Otomatik”
+- Title example:
+  “Satış Takip Randevusu – {School Name}”
+
+- Clicking opens appointment detail.
+
+### MOBILE / PWA
+
+In /m/home:
+- Show:
+  - “Yeni Satış” badge if created today
+  - “Yaklaşan Satış Takibi” from appointments
+
+===========================================================
+PART 4 — SECURITY
+===========================================================
+
+All RBAC rules MUST be applied:
+
+- sales users:
+  - can see ONLY their own targets, earnings, and sales
+  - cannot edit accepted offers
+  - cannot view others’ performance or commissions
+
+- manager:
+  - can set targets only for team
+  - can see team performance/commissions
+
+- admin:
+  - full access
+
+===========================================================
+PART 5 — OPTIONAL ADDITIONS (IMPLEMENT THEM)
+===========================================================
+
+1) Automatically send an announcement to the sales user when their offer is accepted:
+   Insert into announcements table:
+   - type: 'system'
+   - title: 'Tebrikler!'
+   - message: 'Teklif kabul edildi, satış kaydın oluşturuldu.'
+   - audience_type: 'user'
+   - audience_user_id: offer.user_id
+
+2) Dashboard enhancement:
+   Add tile:
+   - “Bu Ay Kabul Edilen Teklifler”
+   - “Bu Ay Oluşan Satışlar”
+   - “Satış Dönüşüm Oranı (%)”
+
+===========================================================
+GOAL
+===========================================================
+
+After implementation:
+
+✔ Admin/manager can set targets  
+✔ Sales only sees their own targets/earnings  
+✔ Offer → Accepted → Auto-Sale → Auto-Appointment workflow works  
+✔ Calendar shows follow-up slot  
+✔ Sales cannot modify accepted offers  
+✔ Audit log records events  
+✔ Dashboard refreshed with new metrics
+
+Integrate everything cleanly into the current code structure.

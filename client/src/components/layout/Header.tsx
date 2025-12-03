@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth';
 import NotificationsPopover from '../NotificationsPopover';
+import { Badge } from '@/components/ui/badge';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -20,6 +21,15 @@ export function Header() {
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
+  };
+
+  const getRoleColor = (role?: string) => {
+    switch (role) {
+        case 'admin': return 'bg-red-100 text-red-800 hover:bg-red-200';
+        case 'manager': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+        case 'sales': return 'bg-green-100 text-green-800 hover:bg-green-200';
+        default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
@@ -56,11 +66,18 @@ export function Header() {
         {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-accent hover:text-accent-foreground rounded-full">
+            <Button variant="ghost" className="flex items-center gap-2 px-2 hover:bg-accent hover:text-accent-foreground rounded-full h-auto py-1">
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
                 {user?.name?.charAt(0) || 'U'}
               </div>
-              <span className="text-sm font-medium hidden sm:block">{user?.name}</span>
+              <div className="flex flex-col items-start hidden sm:flex">
+                <span className="text-sm font-medium leading-none">{user?.name}</span>
+                {user?.role && (
+                    <Badge variant="outline" className={`text-[10px] px-1 py-0 mt-1 border-0 ${getRoleColor(user.role)}`}>
+                        {user.role.toUpperCase()}
+                    </Badge>
+                )}
+              </div>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

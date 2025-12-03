@@ -44,6 +44,10 @@ export default function OfferEdit() {
     },
   });
 
+  // Watch status for UX changes
+  const status = form.watch("status");
+  const isAccepted = status === 'accepted';
+
   useEffect(() => {
     const load = async () => {
       if (!id) return;
@@ -73,9 +77,25 @@ export default function OfferEdit() {
   const onSubmit = async (values: z.infer<typeof offerSchema>) => {
     if (!id) return;
     try {
-      await api.offers.update(parseInt(id), { ...values, school_id: parseInt(values.school_id) });
-      toast({ title: t('common.success'), description: "Offer updated" });
-      navigate('/offers');
+      const updatedOffer = await api.offers.update(parseInt(id), { ...values, school_id: parseInt(values.school_id) });
+      
+      if (values.status === 'accepted' && updatedOffer.status === 'accepted') {
+        toast({ 
+            title: "Teklif Kabul Edildi!", 
+            description: "Otomatik olarak Satış kaydı ve Takip Randevusu oluşturuldu.",
+            className: "bg-green-50 border-green-200 text-green-900",
+            action: <Button variant="outline" size="sm" onClick={() => navigate('/sales')} className="border-green-300 hover:bg-green-100">Satışa Git</Button>
+        });
+      } else {
+        toast({ title: t('common.success'), description: "Offer updated" });
+      }
+      
+      // If accepted, maybe redirect or just refresh
+      if (values.status === 'accepted') {
+         navigate('/offers');
+      } else {
+         navigate('/offers');
+      }
     } catch (error) {
       toast({ title: t('common.error'), variant: "destructive" });
     }
@@ -149,12 +169,14 @@ export default function OfferEdit() {
                     <FormField control={form.control} name="status" render={({ field }) => (
                         <FormItem>
                         <FormLabel>{t('common.status')}</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={field.value === 'accepted'}>
                             <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                             <SelectContent>
                             <SelectItem value="draft">Draft</SelectItem>
                             <SelectItem value="sent">Sent</SelectItem>
+                            <SelectItem value="negotiation">Negotiation</SelectItem>
                             <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />

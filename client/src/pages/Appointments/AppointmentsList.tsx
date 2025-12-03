@@ -14,6 +14,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 
+import { Badge } from '@/components/ui/badge';
+
 export default function AppointmentsList() {
   const { t } = useTranslation();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -62,7 +64,10 @@ export default function AppointmentsList() {
                         appointments.map((app) => (
                         <TableRow key={app.id}>
                             <TableCell>{new Date(app.start_datetime).toLocaleString()}</TableCell>
-                            <TableCell className="capitalize">{app.type}</TableCell>
+                            <TableCell className="capitalize">
+                                {app.type}
+                                {app.is_auto_created && <Badge variant="secondary" className="ml-2 text-[10px]">Auto</Badge>}
+                            </TableCell>
                             <TableCell>{app.school_name}</TableCell>
                             <TableCell>{app.user_name}</TableCell>
                             <TableCell>{app.status}</TableCell>

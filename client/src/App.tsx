@@ -35,6 +35,7 @@ import { MobileLayout } from "@/components/layout/MobileLayout";
 import RequireRole from "@/components/RequireRole";
 import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
+import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 
 // Protected Route Wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -142,14 +143,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <Router />
-          <Toaster />
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
+    <GlobalErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
+            <Router />
+            <Toaster />
+          </BrowserRouter>
+        </AuthProvider>
+      </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 }
 

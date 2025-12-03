@@ -1,15 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api, DashboardSummary } from '@/lib/mockApi';
+import { api, DashboardSummary, Sale } from '@/lib/mockApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Briefcase, FileText, Calendar } from 'lucide-react';
+import { Briefcase, FileText, Calendar, DollarSign } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function MobileHome() {
   const { t } = useTranslation();
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [newSalesCount, setNewSalesCount] = useState(0);
 
   useEffect(() => {
-    api.dashboard.getSummary().then(setSummary);
+    const load = async () => {
+        const summaryData = await api.dashboard.getSummary();
+        setSummary(summaryData);
+
+        // Check for new sales today
+        const sales = await api.sales.list();
+        const today = new Date().toISOString().split('T')[0];
+        const todaySales = sales.filter(s => s.closed_date === today).length;
+        setNewSalesCount(todaySales);
+    };
+    load();
   }, []);
 
   if (!summary) return <div className="p-4">Loading...</div>;
@@ -21,8 +33,15 @@ export default function MobileHome() {
           <h1 className="text-2xl font-bold">Hello!</h1>
           <p className="text-muted-foreground text-sm">Ready for today?</p>
         </div>
-        <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold">
-          ME
+        <div className="flex flex-col items-end">
+            <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold">
+            ME
+            </div>
+            {newSalesCount > 0 && (
+                <Badge className="mt-1 bg-green-500 hover:bg-green-600 text-[10px]">
+                    {newSalesCount} New Sale{newSalesCount > 1 ? 's' : ''}
+                </Badge>
+            )}
         </div>
       </div>
 

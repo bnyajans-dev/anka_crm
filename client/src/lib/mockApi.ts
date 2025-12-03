@@ -2,7 +2,27 @@ import { useState, useEffect } from 'react';
 
 // --- TYPES ---
 
+export type ApiResponse<T> = {
+  success: boolean;
+  data: T;
+  message?: string;
+};
+
 export type Role = 'admin' | 'manager' | 'sales';
+
+export interface SalesTarget {
+  id: number;
+  user_id: number;
+  user_name?: string;
+  period_type: 'month' | 'year';
+  period_year: number;
+  period_month?: number;
+  visit_target: number;
+  offer_target: number;
+  deal_target: number;
+  revenue_target: number;
+  created_by_user_id: number;
+}
 
 export interface User {
   id: number;
@@ -71,6 +91,7 @@ export interface Sale {
   final_revenue_amount: number;
   currency: string;
   payment_status: 'pending' | 'paid' | 'partial' | 'cancelled';
+  created_from_offer?: boolean;
 }
 
 export interface LeaveRequest {
@@ -106,6 +127,7 @@ export interface Appointment {
   end_datetime: string;
   status: 'planned' | 'done' | 'cancelled';
   notes?: string;
+  is_auto_created?: boolean;
 }
 
 export interface DashboardSummary {
@@ -212,6 +234,10 @@ let MOCK_AUDIT_LOGS: AuditLog[] = [
 ];
 let MOCK_COMMISSIONS: Commission[] = [
   { id: 1, user_id: 3, source_type: 'sale', source_id: 1, amount: 1800, currency: 'TRY', date: '2023-10-18', description: 'Commission for Sale #1' }
+];
+
+let MOCK_SALES_TARGETS: SalesTarget[] = [
+  { id: 1, user_id: 3, period_type: 'month', period_year: 2023, period_month: 10, visit_target: 20, offer_target: 10, deal_target: 5, revenue_target: 100000, created_by_user_id: 1 }
 ];
 
 // --- HELPERS ---
@@ -347,8 +373,107 @@ export const api = {
       }));
     },
     create: async (data: any) => { await delay(300); MOCK_OFFERS.push({...data, id: Math.random()}); },
-    update: async (id: number, data: any) => { await delay(300); },
+    update: async (id: number, data: any) => { 
+      await delay(300);
+      const offerIndex = MOCK_OFFERS.findIndex(o => o.id === id);
+      if (offerIndex === -1) throw new Error("Offer not found");
+
+      const oldStatus = MOCK_OFFERS[offerIndex].status;
+      const newStatus = data.status;
+
+      // Update the offer
+      MOCK_OFFERS[offerIndex] = { ...MOCK_OFFERS[offerIndex], ...data };
+
+      // Workflow: Accepted -> Auto Sale + Appointment
+      if (newStatus === 'accepted' && oldStatus !== 'accepted') {
+        const offer = MOCK_OFFERS[offerIndex];
+        
+        // 1. Create Sale
+        const newSale: Sale = {
+          id: Math.random(),
+          offer_id: offer.id,
+          closed_by_user_id: offer.user_id, // Assuming the offer owner closes it
+          closed_date: new Date().toISOString().split('T')[0],
+          final_revenue_amount: offer.total_price,
+          currency: offer.currency,
+          payment_status: 'pending',
+          created_from_offer: true
+        };
+        MOCK_SALES.push(newSale);
+
+        // 2. Create Appointment
+        const newAppt: Appointment = {
+          id: Math.random(),
+          school_id: offer.school_id,
+          user_id: offer.user_id,
+          type: 'visit', // Using 'visit' as 'sale_followup' isn't in type union strictly yet, but can expand
+          start_datetime: new Date(Date.now() + 86400000).toISOString(), // +1 day
+          end_datetime: new Date(Date.now() + 86400000 + 3600000).toISOString(), // +1 hour
+          status: 'planned',
+          notes: 'Otomatik: Teklif kabul edildi -> Satış oluşturuldu.',
+          is_auto_created: true
+        };
+        MOCK_APPOINTMENTS.push(newAppt);
+
+        // 3. Audit Log
+        MOCK_AUDIT_LOGS.push({
+          id: Math.random(),
+          user_id: offer.user_id, // Or current user
+          user_name: 'System',
+          action: 'OFFER_ACCEPTED_TO_SALE',
+          entity_type: 'offer',
+          entity_id: offer.id,
+          changes: JSON.stringify({ sale_id: newSale.id, appointment_id: newAppt.id }),
+          created_at: new Date().toISOString()
+        });
+
+        // 4. Notification
+        MOCK_ANNOUNCEMENTS.push({
+            id: Math.random(),
+            title: 'Tebrikler!',
+            message: 'Teklif kabul edildi, satış kaydın oluşturuldu.',
+            type: 'target_info', // Using closest type
+            audience_type: 'user',
+            created_at: new Date().toISOString()
+        });
+      }
+      return MOCK_OFFERS[offerIndex];
+    },
     delete: async (id: number) => { await delay(300); MOCK_OFFERS = MOCK_OFFERS.filter(o => o.id !== id); }
+  },
+  targets: {
+    list: async (userId?: number, year?: number, month?: number): Promise<SalesTarget[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      let filtered = MOCK_SALES_TARGETS;
+
+      if (currentUser) {
+        if (currentUser.role === 'sales') {
+            // Sales sees only their own
+            filtered = filtered.filter(t => t.user_id === currentUser.id);
+        } else if (currentUser.role === 'manager') {
+            // Manager sees team
+             const teamUserIds = MOCK_USERS.filter(u => u.team_id === currentUser.team_id).map(u => u.id);
+             filtered = filtered.filter(t => teamUserIds.includes(t.user_id));
+        }
+        // Admin sees all, unless filtered by userId param
+      }
+      
+      if (userId) filtered = filtered.filter(t => t.user_id === userId);
+      if (year) filtered = filtered.filter(t => t.period_year === year);
+      if (month) filtered = filtered.filter(t => t.period_month === month);
+
+      return filtered.map(t => ({
+        ...t,
+        user_name: MOCK_USERS.find(u => u.id === t.user_id)?.name
+      }));
+    },
+    create: async (data: any): Promise<SalesTarget> => {
+        await delay(300);
+        const newTarget = { ...data, id: Math.random(), created_by_user_id: 1 };
+        MOCK_SALES_TARGETS.push(newTarget);
+        return newTarget;
+    }
   },
   sales: {
     list: async (): Promise<Sale[]> => {
