@@ -28,7 +28,7 @@ import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
 
 // Protected Route Wrapper
-function ProtectedRoute({ children }: { children: JSX.Element }) {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 

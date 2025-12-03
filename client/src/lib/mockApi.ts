@@ -173,15 +173,15 @@ const getCurrentUser = (): User | undefined => {
 };
 
 // RBAC Filter Logic (Mock)
-const filterByRole = <T extends { user_id?: number }>(items: T[], currentUser: User): T[] => {
+const filterByRole = <T>(items: T[], currentUser: User, userIdKey: keyof T = 'user_id' as keyof T): T[] => {
   if (currentUser.role === 'admin') return items;
   if (currentUser.role === 'manager') {
     // Manager sees their team's items
     const teamUserIds = MOCK_USERS.filter(u => u.team_id === currentUser.team_id).map(u => u.id);
-    return items.filter(item => item.user_id && teamUserIds.includes(item.user_id));
+    return items.filter((item: any) => item[userIdKey] && teamUserIds.includes(item[userIdKey]));
   }
   // Sales sees only their own
-  return items.filter(item => item.user_id === currentUser.id);
+  return items.filter((item: any) => item[userIdKey] === currentUser.id);
 };
 
 // --- API ---
@@ -303,7 +303,7 @@ export const api = {
       await delay(300);
       const currentUser = getCurrentUser();
       let filteredSales = MOCK_SALES;
-      if (currentUser) filteredSales = filterByRole(MOCK_SALES, currentUser);
+      if (currentUser) filteredSales = filterByRole(MOCK_SALES, currentUser, 'closed_by_user_id');
 
       return filteredSales.map(s => {
         const offer = MOCK_OFFERS.find(o => o.id === s.offer_id);
