@@ -14,6 +14,7 @@ export interface User {
   is_active: boolean;
   region?: string;
   districts?: string[];
+  can_manage_expenses?: boolean;
 }
 
 export interface TourDefinition {
@@ -191,6 +192,32 @@ export interface Attachment {
   uploaded_by_user_id: number;
 }
 
+export type ExpenseCategory = 'accommodation' | 'transportation' | 'meals' | 'guide_fees' | 'entrance_fees' | 'insurance' | 'marketing' | 'other';
+export type ExpensePaymentStatus = 'pending' | 'paid' | 'cancelled';
+
+export interface Expense {
+  id: number;
+  sale_id: number;
+  sale_tour_name?: string;
+  sale_school_name?: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  currency: string;
+  date: string;
+  payment_status: ExpensePaymentStatus;
+  created_by_user_id: number;
+  created_by_user_name?: string;
+  created_at: string;
+}
+
+export interface SaleWithProfitability extends Sale {
+  expenses: Expense[];
+  total_expenses: number;
+  profit: number;
+  profit_margin: number;
+}
+
 export interface PerformanceSummary {
   visits_count: number;
   visits_target: number;
@@ -213,11 +240,11 @@ export interface SchoolSummary extends School {
 // --- MOCK DATA ---
 
 let MOCK_USERS: User[] = [
-  { id: 1, name: 'Admin User', email: 'admin@ankatravel.com', role: 'admin', is_active: true, districts: ['Kadıköy', 'Beşiktaş'] },
-  { id: 2, name: 'Manager User', email: 'manager@ankatravel.com', role: 'manager', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'Marmara' },
-  { id: 3, name: 'Sales Person', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'İç Anadolu', districts: ['Çankaya'] },
-  { id: 4, name: 'Another Sales', email: 'sales2@ankatravel.com', role: 'sales', team_id: 2, team_name: 'Sales Team B', is_active: true, region: 'Ege', districts: ['Bornova', 'Konak'] },
-  { id: 5, name: 'System Admin', email: 'sysadmin@ankatravel.com', role: 'system_admin', is_active: true },
+  { id: 1, name: 'Admin User', email: 'admin@ankatravel.com', role: 'admin', is_active: true, districts: ['Kadıköy', 'Beşiktaş'], can_manage_expenses: true },
+  { id: 2, name: 'Manager User', email: 'manager@ankatravel.com', role: 'manager', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'Marmara', can_manage_expenses: true },
+  { id: 3, name: 'Sales Person', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'İç Anadolu', districts: ['Çankaya'], can_manage_expenses: false },
+  { id: 4, name: 'Another Sales', email: 'sales2@ankatravel.com', role: 'sales', team_id: 2, team_name: 'Sales Team B', is_active: true, region: 'Ege', districts: ['Bornova', 'Konak'], can_manage_expenses: false },
+  { id: 5, name: 'System Admin', email: 'sysadmin@ankatravel.com', role: 'system_admin', is_active: true, can_manage_expenses: true },
 ];
 
 let MOCK_TOURS: TourDefinition[] = [
@@ -284,6 +311,13 @@ let MOCK_SALES_TARGETS: SalesTarget[] = [
   { id: 1, user_id: 3, period_type: 'month', period_year: 2023, period_month: 10, visit_target: 20, offer_target: 10, deal_target: 5, revenue_target: 100000, created_by_user_id: 1 },
 ];
 
+let MOCK_EXPENSES: Expense[] = [
+  { id: 1, sale_id: 1, category: 'transportation', description: 'Otobüs kiralama', amount: 15000, currency: 'TRY', date: '2023-10-17', payment_status: 'paid', created_by_user_id: 1, created_at: '2023-10-17T10:00:00' },
+  { id: 2, sale_id: 1, category: 'accommodation', description: 'Otel konaklama - 40 öğrenci, 2 öğretmen', amount: 20000, currency: 'TRY', date: '2023-10-17', payment_status: 'paid', created_by_user_id: 1, created_at: '2023-10-17T10:15:00' },
+  { id: 3, sale_id: 1, category: 'meals', description: 'Yemek organizasyonu', amount: 5000, currency: 'TRY', date: '2023-10-17', payment_status: 'pending', created_by_user_id: 1, created_at: '2023-10-17T10:30:00' },
+  { id: 4, sale_id: 1, category: 'guide_fees', description: 'Rehber ücreti', amount: 2000, currency: 'TRY', date: '2023-10-18', payment_status: 'paid', created_by_user_id: 1, created_at: '2023-10-18T09:00:00' },
+];
+
 // --- HELPERS ---
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -316,6 +350,23 @@ const filterByRole = <T extends { user_id?: number; closed_by_user_id?: number }
 // --- API ---
 
 export const api = {
+  auth: {
+    login: async (email: string, password: string): Promise<{ token: string; user: User }> => {
+      await delay(500);
+      const user = MOCK_USERS.find(u => u.email === email);
+      if (!user) throw new Error('Kullanıcı bulunamadı');
+      localStorage.setItem('anka_user', JSON.stringify(user));
+      return { token: 'mock-jwt-token-' + user.id, user };
+    },
+    logout: async (): Promise<void> => {
+      await delay(100);
+      localStorage.removeItem('anka_user');
+    },
+    getCurrentUser: async (): Promise<User | null> => {
+      await delay(100);
+      return getCurrentUser();
+    },
+  },
   users: {
     list: async (): Promise<User[]> => { await delay(300); return [...MOCK_USERS]; },
     getById: async (id: number): Promise<User> => { await delay(200); return MOCK_USERS.find(u => u.id === id)!; },
@@ -713,6 +764,95 @@ export const api = {
     generate: async (offerId: number): Promise<string> => {
       await delay(1500);
       return 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
+    },
+  },
+  expenses: {
+    list: async (saleId?: number): Promise<Expense[]> => {
+      await delay(300);
+      const currentUser = getCurrentUser();
+      if (!currentUser) return [];
+      
+      const canManage = currentUser.role === 'system_admin' || currentUser.role === 'admin' || currentUser.can_manage_expenses;
+      if (!canManage) return [];
+      
+      let filtered = MOCK_EXPENSES;
+      if (saleId) filtered = filtered.filter(e => e.sale_id === saleId);
+      
+      return filtered.map(exp => {
+        const sale = MOCK_SALES.find(s => s.id === exp.sale_id);
+        const offer = sale ? MOCK_OFFERS.find(o => o.id === sale.offer_id) : null;
+        const school = offer ? MOCK_SCHOOLS.find(sch => sch.id === offer.school_id) : null;
+        return {
+          ...exp,
+          sale_tour_name: offer?.tour_name,
+          sale_school_name: school?.name,
+          created_by_user_name: MOCK_USERS.find(u => u.id === exp.created_by_user_id)?.name,
+        };
+      });
+    },
+    getById: async (id: number): Promise<Expense | undefined> => {
+      await delay(200);
+      return MOCK_EXPENSES.find(e => e.id === id);
+    },
+    create: async (data: Omit<Expense, 'id' | 'created_at' | 'created_by_user_name'>): Promise<Expense> => {
+      await delay(400);
+      const currentUser = getCurrentUser();
+      const newExpense: Expense = {
+        ...data,
+        id: Math.floor(Math.random() * 10000),
+        created_by_user_id: currentUser?.id || 1,
+        created_at: new Date().toISOString(),
+      };
+      MOCK_EXPENSES.push(newExpense);
+      return newExpense;
+    },
+    update: async (id: number, data: Partial<Expense>): Promise<Expense | undefined> => {
+      await delay(400);
+      const idx = MOCK_EXPENSES.findIndex(e => e.id === id);
+      if (idx !== -1) {
+        MOCK_EXPENSES[idx] = { ...MOCK_EXPENSES[idx], ...data };
+        return MOCK_EXPENSES[idx];
+      }
+      return undefined;
+    },
+    delete: async (id: number): Promise<boolean> => {
+      await delay(300);
+      const idx = MOCK_EXPENSES.findIndex(e => e.id === id);
+      if (idx !== -1) {
+        MOCK_EXPENSES.splice(idx, 1);
+        return true;
+      }
+      return false;
+    },
+    getSaleWithProfitability: async (saleId: number): Promise<SaleWithProfitability | undefined> => {
+      await delay(500);
+      const currentUser = getCurrentUser();
+      const sale = MOCK_SALES.find(s => s.id === saleId);
+      if (!sale) return undefined;
+      
+      const offer = MOCK_OFFERS.find(o => o.id === sale.offer_id);
+      const school = offer ? MOCK_SCHOOLS.find(sch => sch.id === offer.school_id) : null;
+      
+      const saleWithDetails: Sale = {
+        ...sale,
+        offer_tour_name: offer?.tour_name,
+        school_name: school?.name,
+        user_name: MOCK_USERS.find(u => u.id === sale.closed_by_user_id)?.name,
+      };
+      
+      const canManage = currentUser?.role === 'system_admin' || currentUser?.role === 'admin' || currentUser?.can_manage_expenses;
+      const saleExpenses = canManage ? MOCK_EXPENSES.filter(e => e.sale_id === saleId) : [];
+      const totalExpenses = saleExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+      const profit = sale.final_revenue_amount - totalExpenses;
+      const profitMargin = sale.final_revenue_amount > 0 ? (profit / sale.final_revenue_amount) * 100 : 0;
+      
+      return {
+        ...saleWithDetails,
+        expenses: saleExpenses,
+        total_expenses: totalExpenses,
+        profit,
+        profit_margin: profitMargin,
+      };
     },
   },
 };

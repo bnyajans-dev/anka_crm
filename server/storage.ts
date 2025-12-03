@@ -16,9 +16,10 @@ import {
   type OfferTemplate, type InsertOfferTemplate,
   type LeaveRequest, type InsertLeaveRequest,
   type Attachment, type InsertAttachment,
+  type Expense, type InsertExpense,
   users, teams, schools, visits, offers, sales, appointments,
   announcements, auditLogs, salesTargets, commissions,
-  tourDefinitions, offerTemplates, leaveRequests, attachments
+  tourDefinitions, offerTemplates, leaveRequests, attachments, expenses
 } from "@shared/schema";
 
 export interface IStorage {
@@ -120,6 +121,19 @@ export interface IStorage {
   listAttachments(relatedType: string, relatedId: number): Promise<Array<Attachment & { uploaderName?: string }>>;
   createAttachment(attachment: InsertAttachment): Promise<Attachment>;
   deleteAttachment(id: number): Promise<boolean>;
+
+  listExpenses(currentUser: User, filters?: { sale_id?: number; category?: string; payment_status?: string; start_date?: Date; end_date?: Date }): Promise<Array<Expense & { saleTourName?: string; saleSchoolName?: string; createdByUserName?: string }>>;
+  getExpense(id: number, currentUser: User): Promise<(Expense & { saleTourName?: string; saleSchoolName?: string; createdByUserName?: string }) | undefined>;
+  createExpense(expense: InsertExpense, currentUser: User): Promise<Expense>;
+  updateExpense(id: number, updates: Partial<InsertExpense>, currentUser: User): Promise<Expense | undefined>;
+  deleteExpense(id: number, currentUser: User): Promise<boolean>;
+  getSaleWithProfitability(saleId: number, currentUser: User): Promise<{
+    sale: Sale & { schoolName?: string; userName?: string; offerDetails?: any };
+    expenses: Array<Expense & { createdByUserName?: string }>;
+    totalExpenses: string;
+    profit: string;
+    profitMargin: number;
+  } | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1167,6 +1181,151 @@ export class DatabaseStorage implements IStorage {
   async deleteAttachment(id: number): Promise<boolean> {
     const result = await db.delete(attachments).where(eq(attachments.id, id));
     return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  private canManageExpenses(user: User): boolean {
+    return user.role === 'system_admin' || user.role === 'admin' || user.can_manage_expenses === true;
+  }
+
+  async listExpenses(currentUser: User, filters?: { sale_id?: number; category?: string; payment_status?: string; start_date?: Date; end_date?: Date }): Promise<Array<Expense & { saleTourName?: string; saleSchoolName?: string; createdByUserName?: string }>> {
+    if (!this.canManageExpenses(currentUser)) {
+      return [];
+    }
+
+    const conditions: SQL[] = [];
+
+    if (filters?.sale_id) {
+      conditions.push(eq(expenses.sale_id, filters.sale_id));
+    }
+    if (filters?.category) {
+      conditions.push(eq(expenses.category, filters.category as any));
+    }
+    if (filters?.payment_status) {
+      conditions.push(eq(expenses.payment_status, filters.payment_status as any));
+    }
+    if (filters?.start_date) {
+      conditions.push(gte(expenses.date, filters.start_date));
+    }
+    if (filters?.end_date) {
+      conditions.push(lte(expenses.date, filters.end_date));
+    }
+
+    const result = await db.query.expenses.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: { 
+        sale: {
+          with: {
+            offer: true,
+            school: true
+          }
+        }, 
+        createdByUser: true 
+      },
+      orderBy: [desc(expenses.created_at)]
+    });
+
+    return result.map(exp => ({
+      ...exp,
+      saleTourName: (exp.sale as any)?.offer?.tour_name,
+      saleSchoolName: (exp.sale as any)?.school?.name,
+      createdByUserName: (exp.createdByUser as any)?.name
+    }));
+  }
+
+  async getExpense(id: number, currentUser: User): Promise<(Expense & { saleTourName?: string; saleSchoolName?: string; createdByUserName?: string }) | undefined> {
+    if (!this.canManageExpenses(currentUser)) {
+      return undefined;
+    }
+
+    const result = await db.query.expenses.findFirst({
+      where: eq(expenses.id, id),
+      with: { 
+        sale: {
+          with: {
+            offer: true,
+            school: true
+          }
+        }, 
+        createdByUser: true 
+      }
+    });
+
+    if (!result) return undefined;
+
+    return {
+      ...result,
+      saleTourName: (result.sale as any)?.offer?.tour_name,
+      saleSchoolName: (result.sale as any)?.school?.name,
+      createdByUserName: (result.createdByUser as any)?.name
+    };
+  }
+
+  async createExpense(expense: InsertExpense, currentUser: User): Promise<Expense> {
+    if (!this.canManageExpenses(currentUser)) {
+      throw new Error('Gider oluşturma yetkiniz bulunmamaktadır.');
+    }
+
+    const [created] = await db.insert(expenses).values(expense as any).returning();
+    return created;
+  }
+
+  async updateExpense(id: number, updates: Partial<InsertExpense>, currentUser: User): Promise<Expense | undefined> {
+    if (!this.canManageExpenses(currentUser)) {
+      throw new Error('Gider güncelleme yetkiniz bulunmamaktadır.');
+    }
+
+    const [updated] = await db.update(expenses)
+      .set({ ...updates, updated_at: new Date() })
+      .where(eq(expenses.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteExpense(id: number, currentUser: User): Promise<boolean> {
+    if (!this.canManageExpenses(currentUser)) {
+      throw new Error('Gider silme yetkiniz bulunmamaktadır.');
+    }
+
+    const result = await db.delete(expenses).where(eq(expenses.id, id));
+    return result.rowCount ? result.rowCount > 0 : false;
+  }
+
+  async getSaleWithProfitability(saleId: number, currentUser: User): Promise<{
+    sale: Sale & { schoolName?: string; userName?: string; offerDetails?: any };
+    expenses: Array<Expense & { createdByUserName?: string }>;
+    totalExpenses: string;
+    profit: string;
+    profitMargin: number;
+  } | undefined> {
+    const sale = await this.getSale(saleId, currentUser);
+    if (!sale) return undefined;
+
+    let saleExpenses: Array<Expense & { createdByUserName?: string }> = [];
+    let totalExpenses = "0";
+    
+    if (this.canManageExpenses(currentUser)) {
+      const expenseList = await this.listExpenses(currentUser, { sale_id: saleId });
+      saleExpenses = expenseList;
+      
+      const expenseSum = await db.select({ total: sum(expenses.amount) })
+        .from(expenses)
+        .where(eq(expenses.sale_id, saleId));
+      
+      totalExpenses = expenseSum[0]?.total || "0";
+    }
+
+    const revenue = parseFloat(sale.final_revenue_amount);
+    const expenseTotal = parseFloat(totalExpenses);
+    const profit = revenue - expenseTotal;
+    const profitMargin = revenue > 0 ? (profit / revenue) * 100 : 0;
+
+    return {
+      sale,
+      expenses: saleExpenses,
+      totalExpenses,
+      profit: profit.toFixed(2),
+      profitMargin: parseFloat(profitMargin.toFixed(2))
+    };
   }
 }
 

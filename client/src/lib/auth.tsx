@@ -17,9 +17,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Check localStorage on load
     const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('anka_user');
     
     if (storedToken && storedUser) {
       setToken(storedToken);
@@ -34,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(response.token);
       setUser(response.user);
       localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+      localStorage.setItem('anka_user', JSON.stringify(response.user));
     } catch (error) {
       console.error('Login failed', error);
       throw error;
@@ -45,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
     localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('anka_user');
   };
 
   return (

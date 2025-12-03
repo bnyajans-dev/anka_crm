@@ -18,6 +18,7 @@ import OffersList from "@/pages/Offers/OffersList";
 import OfferCreate from "@/pages/Offers/OfferCreate";
 import OfferEdit from "@/pages/Offers/OfferEdit";
 import SalesList from "@/pages/Sales/SalesList";
+import SaleDetail from "@/pages/Sales/SaleDetail";
 import AnnouncementsList from "@/pages/Announcements/AnnouncementsList";
 import LeaveRequestsList from "@/pages/Leaves/LeaveRequestsList";
 import AppointmentsList from "@/pages/Appointments/AppointmentsList";
@@ -110,6 +111,7 @@ function Router() {
       <Route path="/offers/:id/edit" element={<ProtectedRoute><OfferEdit /></ProtectedRoute>} />
 
       <Route path="/sales" element={<ProtectedRoute><SalesList /></ProtectedRoute>} />
+      <Route path="/sales/:id" element={<ProtectedRoute><SaleDetail /></ProtectedRoute>} />
       
       <Route path="/announcements" element={<ProtectedRoute><AnnouncementsList /></ProtectedRoute>} />
       <Route path="/leave-requests" element={<ProtectedRoute><LeaveRequestsList /></ProtectedRoute>} />

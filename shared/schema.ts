@@ -19,6 +19,8 @@ export const appointmentStatusEnum = pgEnum('appointment_status', ['planned', 'd
 export const sourceTypeEnum = pgEnum('source_type', ['sale', 'bonus']);
 export const periodTypeEnum = pgEnum('period_type', ['month', 'year']);
 export const relatedTypeEnum = pgEnum('related_type', ['school', 'visit', 'offer', 'sale']);
+export const expenseCategoryEnum = pgEnum('expense_category', ['accommodation', 'transportation', 'meals', 'guide_fees', 'entrance_fees', 'insurance', 'marketing', 'other']);
+export const expensePaymentStatusEnum = pgEnum('expense_payment_status', ['pending', 'paid', 'cancelled']);
 
 // Teams Table
 export const teams = pgTable("teams", {
@@ -40,6 +42,7 @@ export const users = pgTable("users", {
   is_active: boolean("is_active").default(true).notNull(),
   region: text("region"),
   districts: text("districts").array(),
+  can_manage_expenses: boolean("can_manage_expenses").default(false).notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -222,6 +225,21 @@ export const attachments = pgTable("attachments", {
   uploaded_by_user_id: integer("uploaded_by_user_id").references(() => users.id).notNull(),
 });
 
+// Expenses Table (Giderler)
+export const expenses = pgTable("expenses", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  sale_id: integer("sale_id").references(() => sales.id).notNull(),
+  category: expenseCategoryEnum("category").notNull(),
+  description: text("description").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default('TRY').notNull(),
+  date: timestamp("date").notNull(),
+  payment_status: expensePaymentStatusEnum("payment_status").default('pending').notNull(),
+  created_by_user_id: integer("created_by_user_id").references(() => users.id).notNull(),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+  updated_at: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
   users: many(users),
@@ -310,6 +328,17 @@ export const salesTargetsRelations = relations(salesTargets, ({ one }) => ({
   }),
 }));
 
+export const expensesRelations = relations(expenses, ({ one }) => ({
+  sale: one(sales, {
+    fields: [expenses.sale_id],
+    references: [sales.id],
+  }),
+  createdByUser: one(users, {
+    fields: [expenses.created_by_user_id],
+    references: [users.id],
+  }),
+}));
+
 // Insert Schemas
 export const insertTeamSchema = createInsertSchema(teams, {
   name: z.string().min(1),
@@ -333,6 +362,7 @@ export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: tru
 export const insertSalesTargetSchema = createInsertSchema(salesTargets).omit({ id: true, created_at: true });
 export const insertCommissionSchema = createInsertSchema(commissions).omit({ id: true, created_at: true });
 export const insertAttachmentSchema = createInsertSchema(attachments).omit({ id: true, uploaded_at: true });
+export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, created_at: true, updated_at: true });
 
 // Select Types
 export type Team = typeof teams.$inferSelect;
@@ -350,6 +380,7 @@ export type AuditLog = typeof auditLogs.$inferSelect;
 export type SalesTarget = typeof salesTargets.$inferSelect;
 export type Commission = typeof commissions.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;
+export type Expense = typeof expenses.$inferSelect;
 
 // Insert Types
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
@@ -367,3 +398,4 @@ export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 export type InsertSalesTarget = z.infer<typeof insertSalesTargetSchema>;
 export type InsertCommission = z.infer<typeof insertCommissionSchema>;
 export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
+export type InsertExpense = z.infer<typeof insertExpenseSchema>;
