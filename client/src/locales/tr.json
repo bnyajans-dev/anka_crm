@@ -1,0 +1,35 @@
+{
+  "common": {
+    "login": "Giriş Yap",
+    "logout": "Çıkış",
+    "dashboard": "Panel",
+    "schools": "Okullar",
+    "add_new": "Yeni Ekle",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "search": "Ara...",
+    "welcome": "Tekrar Hoşgeldiniz"
+  },
+  "auth": {
+    "email": "E-posta Adresi",
+    "password": "Şifre",
+    "login_subtitle": "Hesabınıza erişmek için giriş yapın",
+    "login_button": "Giriş Yap",
+    "logging_in": "Giriş yapılıyor..."
+  },
+  "schools": {
+    "title": "Okul Listesi",
+    "new_school": "Yeni Okul Ekle",
+    "name": "Okul Adı",
+    "city": "Şehir",
+    "district": "İlçe",
+    "contact_person": "İletişim Kişisi",
+    "contact_phone": "İletişim Telefonu",
+    "actions": "İşlemler",
+    "success_add": "Okul başarıyla eklendi",
+    "form_title": "Okul Bilgileri",
+    "form_subtitle": "Lütfen okul detaylarını giriniz"
+  }
+}

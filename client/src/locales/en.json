@@ -1,0 +1,35 @@
+{
+  "common": {
+    "login": "Login",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "schools": "Schools",
+    "add_new": "Add New",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search...",
+    "welcome": "Welcome Back"
+  },
+  "auth": {
+    "email": "Email Address",
+    "password": "Password",
+    "login_subtitle": "Enter your credentials to access your account",
+    "login_button": "Sign In",
+    "logging_in": "Signing in..."
+  },
+  "schools": {
+    "title": "Schools List",
+    "new_school": "Add New School",
+    "name": "School Name",
+    "city": "City",
+    "district": "District",
+    "contact_person": "Contact Person",
+    "contact_phone": "Contact Phone",
+    "actions": "Actions",
+    "success_add": "School successfully added",
+    "form_title": "School Information",
+    "form_subtitle": "Please enter the school details"
+  }
+}
