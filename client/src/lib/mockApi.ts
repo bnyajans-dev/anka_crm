@@ -13,6 +13,17 @@ export interface User {
   team_name?: string;
   is_active: boolean;
   region?: string;
+  districts?: string[];
+}
+
+export interface TourDefinition {
+  id: number;
+  name: string;
+  description: string;
+  default_price_per_student: number;
+  default_currency: string;
+  default_duration_days: number;
+  region: string;
 }
 
 export interface School {
@@ -201,11 +212,17 @@ export interface SchoolSummary extends School {
 // --- MOCK DATA ---
 
 let MOCK_USERS: User[] = [
-  { id: 1, name: 'Admin User', email: 'admin@ankatravel.com', role: 'admin', is_active: true },
-  { id: 2, name: 'Manager User', email: 'manager@ankatravel.com', role: 'manager', team_id: 1, team_name: 'Sales Team A', is_active: true },
-  { id: 3, name: 'Sales Person', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true },
-  { id: 4, name: 'Another Sales', email: 'sales2@ankatravel.com', role: 'sales', team_id: 2, team_name: 'Sales Team B', is_active: true },
+  { id: 1, name: 'Admin User', email: 'admin@ankatravel.com', role: 'admin', is_active: true, districts: ['Kadıköy', 'Beşiktaş'] },
+  { id: 2, name: 'Manager User', email: 'manager@ankatravel.com', role: 'manager', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'Marmara' },
+  { id: 3, name: 'Sales Person', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'İç Anadolu', districts: ['Çankaya'] },
+  { id: 4, name: 'Another Sales', email: 'sales2@ankatravel.com', role: 'sales', team_id: 2, team_name: 'Sales Team B', is_active: true, region: 'Ege', districts: ['Bornova', 'Konak'] },
   { id: 5, name: 'System Admin', email: 'sysadmin@ankatravel.com', role: 'system_admin', is_active: true },
+];
+
+let MOCK_TOURS: TourDefinition[] = [
+  { id: 1, name: 'Ankara-Çanakkale Turu', description: 'Tarihi Gelibolu yarımadası ve şehitlikler ziyareti.', default_price_per_student: 1500, default_currency: 'TRY', default_duration_days: 2, region: 'Marmara' },
+  { id: 2, name: 'Kapadokya Turu', description: 'Peri bacaları, yer altı şehirleri ve balon turu.', default_price_per_student: 2500, default_currency: 'TRY', default_duration_days: 3, region: 'İç Anadolu' },
+  { id: 3, name: 'Efes & Şirince Turu', description: 'Antik kent ve köy gezisi.', default_price_per_student: 1200, default_currency: 'TRY', default_duration_days: 1, region: 'Ege' },
 ];
 
 let MOCK_SCHOOLS: School[] = [
@@ -319,6 +336,18 @@ export const api = {
     create: async (data: any) => { await delay(300); return data; },
     update: async (id: number, data: any) => { await delay(300); return data; },
     delete: async (id: number) => { await delay(300); }
+  },
+  tours: {
+    list: async (): Promise<TourDefinition[]> => { await delay(300); return [...MOCK_TOURS]; },
+    getById: async (id: number): Promise<TourDefinition> => { await delay(200); return MOCK_TOURS.find(t => t.id === id)!; },
+    create: async (data: any) => { await delay(300); MOCK_TOURS.push({ ...data, id: Math.random() }); return data; },
+    update: async (id: number, data: any) => { 
+      await delay(300); 
+      const idx = MOCK_TOURS.findIndex(t => t.id === id);
+      if (idx !== -1) MOCK_TOURS[idx] = { ...MOCK_TOURS[idx], ...data };
+      return data; 
+    },
+    delete: async (id: number) => { await delay(300); MOCK_TOURS = MOCK_TOURS.filter(t => t.id !== id); }
   },
   schools: {
     list: async (): Promise<School[]> => { await delay(300); return [...MOCK_SCHOOLS]; },

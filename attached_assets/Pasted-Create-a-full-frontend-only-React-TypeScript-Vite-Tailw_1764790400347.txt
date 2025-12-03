@@ -1,0 +1,54 @@
+Create a full frontend-only React + TypeScript + Vite + Tailwind + ShadCN UI application named “ANKA TRAVEL SAHA CRM”. Use a single mockApi.ts file for all data, fully in-memory arrays, no backend. The application must include full RBAC, dashboards, charts, region-based map reports, person-based performance targets, tour definitions, school city/district selection, automatic offer-to-sale conversion, appointment scheduling, email sending, attachments, audit logs, announcements, visits, offers, sales, schools, users, teams, and settings. All UI must be Turkish. The entire prompt must be implemented exactly and fully.
+
+ROLES: system_admin, admin, manager, sales. system_admin can access and change everything. admin manages users, teams, targets, tours, schools. manager sees only users in their own team and their team’s data. sales sees only their own data. All pages must hide/show elements based on role. RBAC must be implemented at both UI and mock API filtering level.
+
+MAIN MODULES: Dashboard, Schools, Visits, Offers, Sales, Appointments, Users, Teams, Announcements, Tours (Tour Definitions), Performance Targets, My Performance, Commissions, Attachments, Audit Logs, Region Map Report (Harita Raporu), Settings.
+
+SCHOOL MANAGEMENT: School form must include: name, city (select), district (select dependent on city), contact person, contact phone, region, latitude, longitude. “İstanbul” must always appear at the top of the city dropdown. District map must include at least: İstanbul: Fatih, Kadıköy, Üsküdar, Kartal, Pendik, Beşiktaş, Bakırköy, Zeytinburnu. Ankara: Çankaya, Keçiören, Yenimahalle. İzmir: Konak, Bornova, Karşıyaka. District select must refresh dynamically on city change.
+
+TOUR DEFINITIONS: Add entity TourDefinition { id, name, description, default_price_per_student, default_currency, default_duration_days, region }. Create page /settings/tours with CRUD. In Offer form, user must select a tour; selecting a tour should automatically fill price_per_student and currency with defaults but allow manual editing.
+
+OFFER MODULE: Offer contains: school_id, user_id, tour_name, student_count, teacher_count, price_per_student, total_price (auto-calculated), currency, valid_until, contact_name, contact_email, status (draft, sent, negotiation, accepted, rejected). Sales can edit only their own offers, cannot edit accepted offers. Manager/admin can edit unless status is accepted. When offer.status becomes “accepted”: automatically create a Sale entity, automatically create an Appointment (+1 day), append an Audit Log entry, and push an Announcement to the user. Include “Teklifi Mail Gönder” button. Sending email updates last_sent_at and last_sent_status.
+
+USER RESPONSIBLE DISTRICTS: Extend User type with region?: string, districts?: string[]. Multi-select district selector in user create/edit for system_admin and admin. These districts are used by the map report for filtering.
+
+REGION MAP REPORT: Create route /reports/map. Allowed roles: system_admin, admin, manager. Use React-Leaflet + OpenStreetMap. Filters: date range, data type (Visits / Offers / Sales), city, region, sales person. Schools must appear as pins using latitude/longitude. Marker color or size must reflect chosen data type (visits count, offer count, revenue). Popup must show school name, city, district, region, number of visits/offers/sales in filter range, total revenue, and link to school detail. If a sales user is selected, only show schools in their assigned districts (user.districts). Highlight that region visually. Show summary panel: total schools, total visits, total offers, total sales, total revenue for selected filter.
+
+PERFORMANCE TARGETS (Kişi Bazlı Hedefler): SalesTarget { id, user_id, period_type, period_year, period_month, visit_target, offer_target, deal_target, revenue_target }. Targets are always per user, not per team. Admin/Manager must see list of users with progress bars (visits %, offers %, deals %, revenue %). Clicking a user opens target form. Sales user only sees their own performance in /performance/my.
+
+VISITS: CRUD. Sales see only their own; manager sees team; admin/system_admin sees all. Include fields: school_id, visit_date, status, contact_person, notes, next_step.
+
+SALES: Sales are auto-created when an offer is accepted. Must display revenue, currency, school, offer data, payment status.
+
+APPOINTMENTS: Calendar + list view. Automatically created after offer acceptance (+1 day follow-up). Users can create their own appointments; manager/admin can create for team; system_admin for all.
+
+ANNOUNCEMENTS: Announcement { id, title, message, type, audience_type, created_at, expires_at }. Types: announcement, campaign, target_info, warning. Audience: all, role, team, user.
+
+ATTACHMENTS: Allow photo/file upload to: school, visit, offer, sale. Return placeholder URL in mockApi.
+
+AUDIT LOGS: Every important action logs: entity, user_id, timestamp, changes. List in /audit.
+
+DASHBOARD: Show: total schools, total visits (role adjusted), total offers, accepted offers, total sales, total revenue (role-adjusted), upcoming appointments. Include charts: visits per day (line), revenue per month (bar), offers by status (pie), top 5 schools by revenue.
+
+MOCK API: All CRUD must exist. All data must be in-memory. All RBAC filters must apply (sales = only own, manager = team only, admin = all, system_admin = override). Email sending, PDF generation, file upload must return dummy success values. No real API calls.
+
+UI/UX: Turkish language everywhere. Fully responsive. ShadCN UI. Navigation sidebar. Topbar with user profile. Light/Dark mode toggle. Mobile-friendly layout. Map full width on mobile. Tables become cards on mobile.
+
+STRUCTURE:
+/src/pages/dashboard
+/src/pages/schools
+/src/pages/visits
+/src/pages/offers
+/src/pages/sales
+/src/pages/appointments
+/src/pages/users
+/src/pages/teams
+/src/pages/performance
+/src/pages/performance/my
+/src/pages/reports/map
+/src/pages/settings/tours
+/src/pages/attachments
+/src/pages/audit
+/src/pages/auth/login
+
+GOAL: Generate the complete frontend CRM with all pages, forms, tables, filters, mock API, navigation, RBAC, region map, city/district selects, user district responsibility, tour definitions, offer automation, performance targets, appointments, dashboards, and fully working UI. All must be built in one pass with no missing modules.

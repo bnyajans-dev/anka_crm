@@ -115,6 +115,12 @@ export function Sidebar() {
     },
     // Admin Settings
     {
+      title: 'Tur Tanımları',
+      icon: Map,
+      href: '/settings/tours',
+      roles: ['admin', 'system_admin']
+    },
+    {
       title: 'Teklif Şablonu',
       icon: FileText,
       href: '/settings/offer-template',

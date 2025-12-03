@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import AttachmentsPanel from '@/components/AttachmentsPanel';
 
@@ -20,7 +21,23 @@ const schoolSchema = z.object({
   district: z.string().min(2, "District is required"),
   contact_person: z.string().min(3, "Contact person is required"),
   contact_phone: z.string().min(10, "Valid phone number is required"),
+  region: z.string().optional(),
+  latitude: z.coerce.number().optional(),
+  longitude: z.coerce.number().optional(),
 });
+
+const CITIES = ['İstanbul', 'Ankara', 'İzmir', 'Antalya', 'Bursa', 'Adana'];
+
+const DISTRICTS: Record<string, string[]> = {
+  'İstanbul': ['Fatih', 'Kadıköy', 'Üsküdar', 'Kartal', 'Pendik', 'Beşiktaş', 'Bakırköy', 'Zeytinburnu'],
+  'Ankara': ['Çankaya', 'Keçiören', 'Yenimahalle'],
+  'İzmir': ['Konak', 'Bornova', 'Karşıyaka'],
+  'Antalya': ['Muratpaşa', 'Kepez', 'Konyaaltı'],
+  'Bursa': ['Osmangazi', 'Nilüfer', 'Yıldırım'],
+  'Adana': ['Seyhan', 'Çukurova', 'Yüreğir']
+};
+
+const REGIONS = ['Marmara', 'Ege', 'Akdeniz', 'İç Anadolu', 'Karadeniz', 'Doğu Anadolu', 'Güneydoğu Anadolu'];
 
 export default function SchoolEdit() {
   const { t } = useTranslation();
@@ -37,8 +54,25 @@ export default function SchoolEdit() {
       district: '',
       contact_person: '',
       contact_phone: '',
+      region: '',
+      latitude: 0,
+      longitude: 0,
     },
   });
+
+  const selectedCity = form.watch('city');
+
+  // Reset district when city changes
+  useEffect(() => {
+    if (selectedCity) {
+       const currentDistrict = form.getValues('district');
+       const districts = DISTRICTS[selectedCity] || [];
+       // Only clear if district is invalid for new city
+       if (currentDistrict && !districts.includes(currentDistrict)) {
+           form.setValue('district', '');
+       }
+    }
+  }, [selectedCity, form]);
 
   useEffect(() => {
     const fetchSchool = async () => {
@@ -49,8 +83,11 @@ export default function SchoolEdit() {
           name: school.name,
           city: school.city,
           district: school.district,
-          contact_person: school.contact_person,
-          contact_phone: school.contact_phone,
+          contact_person: school.contact_person || '',
+          contact_phone: school.contact_phone || '',
+          region: school.region || '',
+          latitude: school.latitude || 0,
+          longitude: school.longitude || 0,
         });
       } catch (error) {
         toast({
@@ -138,9 +175,18 @@ export default function SchoolEdit() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>{t('schools.city')}</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Ankara" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select City" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {CITIES.map(city => (
+                                    <SelectItem key={city} value={city}>{city}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
                             </FormItem>
                         )}
@@ -152,13 +198,50 @@ export default function SchoolEdit() {
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>{t('schools.district')}</FormLabel>
-                            <FormControl>
-                                <Input placeholder="Çankaya" {...field} />
-                            </FormControl>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCity}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select District" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                {(DISTRICTS[selectedCity] || []).map(dist => (
+                                    <SelectItem key={dist} value={dist}>{dist}</SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
                             <FormMessage />
                             </FormItem>
                         )}
                         />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="region"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Bölge</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl><SelectTrigger><SelectValue placeholder="Bölge Seç" /></SelectTrigger></FormControl>
+                                    <SelectContent>
+                                        {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField control={form.control} name="latitude" render={({ field }) => (
+                            <FormItem><FormLabel>Enlem</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={form.control} name="longitude" render={({ field }) => (
+                            <FormItem><FormLabel>Boylam</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                        )} />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

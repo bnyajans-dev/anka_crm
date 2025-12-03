@@ -40,6 +40,26 @@ export default function UserFormPage() {
       is_active: true,
     },
   });
+  
+  const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
+
+  // Flattened list of districts for simple selection
+  const allDistricts = [
+    // Istanbul
+    'Fatih', 'Kadıköy', 'Üsküdar', 'Kartal', 'Pendik', 'Beşiktaş', 'Bakırköy', 'Zeytinburnu',
+    // Ankara
+    'Çankaya', 'Keçiören', 'Yenimahalle',
+    // Izmir
+    'Konak', 'Bornova', 'Karşıyaka'
+  ];
+
+  const toggleDistrict = (district: string) => {
+      if (selectedDistricts.includes(district)) {
+          setSelectedDistricts(selectedDistricts.filter(d => d !== district));
+      } else {
+          setSelectedDistricts([...selectedDistricts, district]);
+      }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -57,6 +77,7 @@ export default function UserFormPage() {
             region: user.region || '',
             is_active: user.is_active,
           });
+          if (user.districts) setSelectedDistricts(user.districts);
         }
       }
       setLoading(false);
@@ -69,6 +90,7 @@ export default function UserFormPage() {
       const data = {
         ...values,
         team_id: values.team_id ? parseInt(values.team_id) : undefined,
+        districts: selectedDistricts
       };
 
       if (id) {
@@ -142,6 +164,25 @@ export default function UserFormPage() {
                   <FormMessage />
                 </FormItem>
               )} />
+
+              <FormItem>
+                  <FormLabel>Sorumlu Olduğu İlçeler (Harita Raporu İçin)</FormLabel>
+                  <div className="grid grid-cols-3 gap-2 border p-4 rounded-md max-h-[200px] overflow-y-auto">
+                      {allDistricts.map(district => (
+                          <div key={district} className="flex items-center space-x-2">
+                              <Checkbox 
+                                  id={`district-${district}`} 
+                                  checked={selectedDistricts.includes(district)}
+                                  onCheckedChange={() => toggleDistrict(district)}
+                              />
+                              <label htmlFor={`district-${district}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+                                  {district}
+                              </label>
+                          </div>
+                      ))}
+                  </div>
+                  <FormDescription>Birden fazla seçim yapabilirsiniz.</FormDescription>
+              </FormItem>
 
               <FormField control={form.control} name="is_active" render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">

@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Loader2, Save } from 'lucide-react';
-import { api, School } from '@/lib/mockApi';
+import { api, School, TourDefinition } from '@/lib/mockApi';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,7 @@ const offerSchema = z.object({
   student_count: z.coerce.number().min(1),
   teacher_count: z.coerce.number().min(0),
   price_per_student: z.coerce.number().min(0),
+  currency: z.string().min(1),
   status: z.enum(['draft', 'sent', 'negotiation', 'accepted', 'rejected']),
 });
 
@@ -27,6 +28,7 @@ export default function OfferCreate() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [schools, setSchools] = useState<School[]>([]);
+  const [tours, setTours] = useState<TourDefinition[]>([]);
   
   const form = useForm<z.infer<typeof offerSchema>>({
     resolver: zodResolver(offerSchema),
@@ -36,13 +38,29 @@ export default function OfferCreate() {
       student_count: 0,
       teacher_count: 0,
       price_per_student: 0,
+      currency: 'TRY',
       status: 'draft',
     },
   });
 
   useEffect(() => {
-    api.schools.list().then(setSchools);
+    Promise.all([
+        api.schools.list(),
+        api.tours.list()
+    ]).then(([s, t]) => {
+        setSchools(s);
+        setTours(t);
+    });
   }, []);
+
+  const handleTourChange = (tourIdStr: string) => {
+      const tour = tours.find(t => t.id === parseInt(tourIdStr));
+      if (tour) {
+          form.setValue('tour_name', tour.name);
+          form.setValue('price_per_student', tour.default_price_per_student);
+          form.setValue('currency', tour.default_currency);
+      }
+  };
 
   const onSubmit = async (values: z.infer<typeof offerSchema>) => {
     try {
@@ -50,9 +68,8 @@ export default function OfferCreate() {
       await api.offers.create({ 
         ...values, 
         school_id: parseInt(values.school_id), 
-        user_id: 1, 
+        user_id: 1, // In real app, this is from auth context
         total_price, 
-        currency: 'TRY' 
       });
       toast({ title: t('common.success'), description: "Offer created" });
       navigate('/offers');
@@ -84,16 +101,37 @@ export default function OfferCreate() {
                 </FormItem>
               )} />
               
+              <FormItem>
+                  <FormLabel>{t('offers.tour_name')}</FormLabel>
+                  <Select onValueChange={handleTourChange}>
+                    <FormControl><SelectTrigger><SelectValue placeholder="Select Tour" /></SelectTrigger></FormControl>
+                    <SelectContent>{tours.map(t => <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>)}</SelectContent>
+                  </Select>
+              </FormItem>
+
+              {/* Hidden or Read-only Tour Name if needed, but we used it to populate form state. 
+                  We can also keep it as a hidden field but let user edit if needed? 
+                  Requirement: "selecting a tour should automatically fill... but allow manual editing"
+              */}
               <FormField control={form.control} name="tour_name" render={({ field }) => (
-                <FormItem><FormLabel>{t('offers.tour_name')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Tour Name (Editable)</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="student_count" render={({ field }) => (
                   <FormItem><FormLabel>{t('offers.student_count')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
+                <FormField control={form.control} name="teacher_count" render={({ field }) => (
+                  <FormItem><FormLabel>Teachers</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="price_per_student" render={({ field }) => (
                   <FormItem><FormLabel>Price per Student</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                 <FormField control={form.control} name="currency" render={({ field }) => (
+                  <FormItem><FormLabel>Currency</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
 

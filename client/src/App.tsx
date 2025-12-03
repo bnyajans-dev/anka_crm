@@ -40,6 +40,8 @@ import { GlobalErrorBoundary } from "@/components/GlobalErrorBoundary";
 import TargetsList from "@/pages/Performance/TargetsList";
 import PerformanceUsers from "@/pages/Performance/PerformanceUsers";
 import OfferTemplateSettings from "@/pages/Settings/OfferTemplateSettings";
+import ToursList from "@/pages/Settings/ToursList";
+import TourForm from "@/pages/Settings/TourForm";
 import SchoolDetail from "@/pages/SchoolDetail";
 
 import SystemUsersPage from "@/pages/system/SystemUsersPage";
@@ -119,6 +121,10 @@ function Router() {
       <Route path="/commissions" element={<ProtectedRoute><CommissionsPage /></ProtectedRoute>} />
       
       <Route path="/settings/offer-template" element={<ProtectedRoute><RequireRole roles={['admin', 'system_admin']}><OfferTemplateSettings /></RequireRole></ProtectedRoute>} />
+      
+      <Route path="/settings/tours" element={<ProtectedRoute><RequireRole roles={['admin', 'system_admin']}><ToursList /></RequireRole></ProtectedRoute>} />
+      <Route path="/settings/tours/new" element={<ProtectedRoute><RequireRole roles={['admin', 'system_admin']}><TourForm /></RequireRole></ProtectedRoute>} />
+      <Route path="/settings/tours/:id/edit" element={<ProtectedRoute><RequireRole roles={['admin', 'system_admin']}><TourForm /></RequireRole></ProtectedRoute>} />
 
       {/* System Admin Routes */}
       <Route path="/system/users" element={<ProtectedRoute><RequireRole roles={['system_admin']}><SystemUsersPage /></RequireRole></ProtectedRoute>} />
