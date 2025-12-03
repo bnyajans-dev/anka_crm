@@ -101,13 +101,13 @@ export default function OfferCreate() {
                 </FormItem>
               )} />
               
-              <FormItem>
-                  <FormLabel>{t('offers.tour_name')}</FormLabel>
+              <div className="space-y-2">
+                  <label className="text-sm font-medium">Tur Seçimi</label>
                   <Select onValueChange={handleTourChange}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="Select Tour" /></SelectTrigger></FormControl>
-                    <SelectContent>{tours.map(t => <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>)}</SelectContent>
+                    <SelectTrigger><SelectValue placeholder="Tur Seçiniz" /></SelectTrigger>
+                    <SelectContent>{tours.map(tour => <SelectItem key={tour.id} value={tour.id.toString()}>{tour.name}</SelectItem>)}</SelectContent>
                   </Select>
-              </FormItem>
+              </div>
 
               {/* Hidden or Read-only Tour Name if needed, but we used it to populate form state. 
                   We can also keep it as a hidden field but let user edit if needed? 
