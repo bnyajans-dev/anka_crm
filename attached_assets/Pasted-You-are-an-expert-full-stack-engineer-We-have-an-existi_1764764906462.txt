@@ -1,0 +1,215 @@
+You are an expert full-stack engineer.
+We have an existing Anka Travel CRM with:
+
+- Backend: Node.js + TypeScript + Express + PostgreSQL + ORM
+- Frontend: React + TypeScript + Tailwind (admin panel + some mobile routes)
+- JWT auth, RBAC (admin/manager/sales)
+- Many modules already working (schools, visits, offers, sales, leaves, announcements, appointments, etc.)
+
+Now I want to IMPROVE STABILITY & UX with:
+
+====================================================
+1) BACKEND – GLOBAL ERROR HANDLING & API RESPONSE FORMAT
+====================================================
+
+### a) Standard API Response Shape
+
+Introduce a consistent response format:
+
+- On success:
+  {
+    success: true,
+    data: ...,
+    message?: string
+  }
+
+- On error:
+  {
+    success: false,
+    message: string,
+    code?: string,
+    details?: any
+  }
+
+It’s okay if some older endpoints are not fully migrated right away,
+but for all new/updated controllers, use this format.
+
+### b) Global Error Middleware
+
+Create a global error-handling middleware, e.g.:
+
+- src/middleware/errorHandler.ts
+
+This should:
+
+- Catch any thrown Error (or custom AppError).
+- Log minimal info to the console (or a logger) in dev.
+- Map known errors (validation, notFound, forbidden, unauthorized) to proper HTTP status codes and response shape.
+
+Example:
+
+- ValidationError → 400
+- AuthError / Unauthorized → 401
+- ForbiddenError → 403
+- NotFoundError → 404
+- Default → 500
+
+Create a simple AppError class in, e.g., src/utils/AppError.ts with:
+
+- statusCode
+- message
+- code? (string)
+
+Then in controllers you can do:
+
+- throw new AppError(404, "School not found", "SCHOOL_NOT_FOUND")
+
+### c) 404 Handler
+
+Add a “not found” middleware for unknown routes:
+
+- At the end of the routes, handle any unmatched path with 404 JSON using the same error format.
+
+### d) Basic Request Validation Example
+
+For at least one endpoint (e.g. POST /api/schools or POST /api/offers),
+add a simple validation layer using e.g. Zod or Joi.
+
+- Create src/validation/schoolValidation.ts with a schema.
+- If validation fails, throw a ValidationError / AppError(400, ...).
+- This will go through the global error handler.
+
+Integrate the errorHandler and 404 handler in src/index.ts or app.ts.
+
+====================================================
+2) FRONTEND – AXIOS INTERCEPTORS & ERROR HANDLING
+====================================================
+
+We already have an axios instance used for API calls.
+
+### a) Enhance Axios Instance
+
+In src/lib/api.ts (or similar):
+
+- Request interceptor:
+  - Attach Authorization: Bearer <token> if token exists in localStorage or auth context.
+
+- Response interceptor:
+  - If response has success === false:
+    - Optionally show a toast error (we’ll wire the toast later).
+    - Reject with a normalized error object.
+  - If HTTP status is 401 (Unauthorized):
+    - Clear auth (token + user) from localStorage/context.
+    - Redirect to /login.
+  - For other 4xx/5xx, map to a unified error shape:
+
+    type ApiError = {
+      message: string;
+      status?: number;
+      code?: string;
+      details?: any;
+    };
+
+### b) Global Error Boundary
+
+Create a React Error Boundary component, e.g.:
+
+- src/components/GlobalErrorBoundary.tsx
+
+It should:
+
+- Catch render-time errors in React.
+- Show a user-friendly fallback (e.g. “Beklenmeyen bir hata oluştu”).
+- Optionally provide a “Yeniden Dene” butonu.
+
+Wrap the main app layout in this boundary (in main.tsx or App.tsx).
+
+====================================================
+3) FRONTEND – TOAST NOTIFICATIONS & LOADING HANDLING
+====================================================
+
+### a) Toast System
+
+Implement a simple toast system (if a library is not yet used, you can use something like a minimal custom solution, or a lightweight library).
+
+- Create a ToastContext or use a simple global store:
+  - showSuccess(message: string)
+  - showError(message: string)
+
+- Add a <ToastContainer /> at the root of the app to render toasts.
+
+Integrate:
+
+- On successful create/update/delete operations:
+  - showSuccess("İşlem başarılı") or a more specific message.
+
+- In places where axios interceptors catch API errors:
+  - showError(error.message).
+
+### b) Loading State Hook / Component
+
+Implement:
+
+- src/components/LoadingOverlay.tsx:
+  - Full-screen semi-transparent overlay with a spinner and “Yükleniyor…” text.
+
+- src/hooks/useLoading.ts:
+  - A simple hook that returns:
+    - isLoading, withLoading(fn)
+
+Where withLoading wraps async actions to automatically set/unset loading.
+
+Use it in a couple of key pages (e.g. Schools list or Offers list) to show loading state on initial fetch and major actions.
+
+====================================================
+4) FRONTEND – AUTH CONTEXT & HEADER USER INFO
+====================================================
+
+If not already implemented fully:
+
+- Create src/context/AuthContext.tsx (or improve existing):
+  - Holds:
+    - user: { id, name, email, role, teamId } | null
+    - token: string | null
+  - Methods:
+    - login(token, user)
+    - logout()
+
+- On login:
+  - Save token + user info to localStorage.
+  - Axios instance should read token from context or localStorage.
+
+- In the main layout header:
+  - Display logged-in user’s name + role badge.
+    Example: “Uğur Özarslan – Admin” or “Satış”.
+
+Role badge can be a small colored pill.
+
+====================================================
+5) CLEAN UP – APPLY FORMAT CONSISTENCY
+====================================================
+
+- For a few key pages (e.g. Schools, Visits, Offers), ensure:
+  - API calls expect { success, data } format.
+  - They gracefully handle errors using the new normalized error and toast system.
+  - They show loading states.
+
+====================================================
+GOAL
+
+After these changes:
+
+- Backend:
+  - All errors flow through one global handler with a standard JSON format.
+  - Unknown routes return consistent 404 JSON.
+  - At least one endpoint showcases proper request validation.
+
+- Frontend:
+  - Axios interceptors handle auth + errors.
+  - Unauthorized (401) automatically logs the user out and redirects to /login.
+  - There is a global toast system for success/error feedback.
+  - There is a global loading pattern for async operations.
+  - The header shows the current user and role.
+
+Implement these improvements in a clean and idiomatic TypeScript fashion,
+integrated with the existing Anka Travel CRM codebase.
