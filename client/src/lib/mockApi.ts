@@ -245,6 +245,7 @@ let MOCK_USERS: User[] = [
   { id: 3, name: 'Sales Person', email: 'sales@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'İç Anadolu', districts: ['Çankaya'], can_manage_expenses: false },
   { id: 4, name: 'Another Sales', email: 'sales2@ankatravel.com', role: 'sales', team_id: 2, team_name: 'Sales Team B', is_active: true, region: 'Ege', districts: ['Bornova', 'Konak'], can_manage_expenses: false },
   { id: 5, name: 'System Admin', email: 'sysadmin@ankatravel.com', role: 'system_admin', is_active: true, can_manage_expenses: true },
+  { id: 6, name: 'Satış Uzmanı', email: 'uzman@ankatravel.com', role: 'sales', team_id: 1, team_name: 'Sales Team A', is_active: true, region: 'Marmara', districts: ['Kadıköy', 'Üsküdar'], can_manage_expenses: false },
 ];
 
 let MOCK_TOURS: TourDefinition[] = [
