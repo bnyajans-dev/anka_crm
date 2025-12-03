@@ -1,0 +1,383 @@
+We already have an Anka Travel CRM project with:
+
+- Node.js + TypeScript + Express backend
+- JWT auth + auth middleware
+- PostgreSQL (with ORM)
+- "schools" module fully working (CRUD)
+- React + TypeScript + Tailwind admin panel
+- Login + ProtectedRoute + axios instance with Authorization header
+- "Schools" pages: list, create, edit, delete
+
+Now I want to ADD THE REST OF THE CORE MODULES and create a COMPLETE CRM SKELETON.
+
+Please implement BOTH BACKEND and FRONTEND parts according to the specs below.
+
+=====================================================
+ 1) VISITS MODULE (SCHOOL VISITS)
+=====================================================
+
+### Backend
+
+Create "visits" table and endpoints.
+
+Table: visits
+- id (uuid, pk)
+- school_id (uuid, FK → schools)
+- user_id (uuid, FK → users)
+- visit_date (timestamp)
+- status: enum('planned','done','cancelled')
+- contact_person (string, nullable)
+- notes (text, nullable)
+- next_step (text, nullable)
+- created_at, updated_at
+
+Endpoints (all JWT protected):
+- GET   /api/visits
+  - Filters: ?from=&to=&schoolId=&userId=&status=
+- GET   /api/visits/:id
+- POST  /api/visits
+- PUT   /api/visits/:id
+- DELETE /api/visits/:id
+
+Apply RBAC:
+- admin → can see all
+- manager → can see visits of users in their team
+- sales → can see only their own visits
+
+### Frontend (Admin)
+
+Add pages:
+
+1) VisitsListPage
+   - Route: /visits
+   - Table columns: visit_date, school_name, sales_user_name, status, contact_person
+   - Filter bar: date range, school dropdown, status, user dropdown (for admin/manager)
+   - Actions: Edit, Delete
+
+2) VisitCreatePage
+   - Route: /visits/new
+   - Form:
+     - school (select from schools)
+     - visit_date (datetime)
+     - status (default 'planned')
+     - contact_person
+     - notes
+     - next_step
+   - POST /api/visits, then redirect to /visits
+
+3) VisitEditPage
+   - Route: /visits/:id/edit
+   - Load visit with GET /api/visits/:id
+   - Save with PUT /api/visits/:id
+
+Add "Ziyaretler" menu item in sidebar → /visits.
+
+=====================================================
+ 2) OFFERS & SALES MODULE (PIPELINE)
+=====================================================
+
+### Backend
+
+Tables:
+
+offers
+- id (uuid)
+- school_id (uuid FK)
+- user_id (uuid FK → users)   // owner
+- visit_id (uuid FK → visits, nullable)
+- tour_name (string)
+- student_count (int)
+- teacher_count (int)
+- price_per_student (numeric)
+- total_price (numeric)
+- currency (string, default 'TRY')
+- valid_until (date, nullable)
+- status: enum('draft','sent','negotiation','accepted','rejected')
+- created_at, updated_at
+
+sales
+- id (uuid)
+- offer_id (uuid FK → offers)
+- closed_by_user_id (uuid FK → users)
+- closed_date (date)
+- final_revenue_amount (numeric)
+- currency (string, default 'TRY')
+- payment_status: enum('pending','paid','partial','cancelled')
+- created_at, updated_at
+
+Endpoints:
+
+OFFERS
+- GET   /api/offers  (filters: date range, school, user, status)
+- GET   /api/offers/:id
+- POST  /api/offers
+- PUT   /api/offers/:id
+- DELETE /api/offers/:id
+
+SALES
+- GET   /api/sales (filters: date range, user, school)
+- GET   /api/sales/:id
+- POST  /api/sales      // create from accepted offer
+- PUT   /api/sales/:id
+- DELETE /api/sales/:id
+
+RBAC:
+- admin → all
+- manager → only team’s users’ offers & sales
+- sales → only their own offers & sales
+
+For now, implement PDF generation only as a placeholder:
+- Endpoint: POST /api/offers/:id/generate-pdf
+  - For now, just update offers.pdf_url with a dummy URL or a TODO comment.
+
+### Frontend (Admin)
+
+Add sidebar items:
+- "Teklifler" → /offers
+- "Satışlar" → /sales
+
+Pages:
+
+1) OffersListPage
+   - Route: /offers
+   - Table: school_name, tour_name, student_count, total_price, status, owner user
+   - Filters: date range (created_at), school, status, user
+   - Actions: View/Edit, Delete
+
+2) OfferCreatePage
+   - Route: /offers/new
+   - Form:
+     - school (select)
+     - optional visit (select from visits of that school)
+     - tour_name
+     - student_count
+     - teacher_count
+     - price_per_student
+     - auto-calc total_price (on change)
+     - valid_until
+     - status (default 'draft')
+   - POST /api/offers then redirect to /offers
+
+3) OfferEditPage
+   - Route: /offers/:id/edit
+   - Same fields, loaded from GET /api/offers/:id
+
+4) SalesListPage
+   - Route: /sales
+   - Table columns: school_name, tour_name, closed_date, final_revenue_amount, payment_status, owner user
+   - Filters: date range, school, user, payment_status
+
+5) SaleCreatePage (simple)
+   - Route: /sales/new
+   - For now:
+     - select offer
+     - closed_date
+     - final_revenue_amount
+     - payment_status
+   - POST /api/sales
+
+=====================================================
+ 3) LEAVE REQUESTS MODULE
+=====================================================
+
+### Backend
+
+Tables:
+
+leave_balances
+- id (uuid)
+- user_id (uuid FK)
+- year (int)
+- annual_leave_total_days
+- annual_leave_used_days
+- created_at, updated_at
+
+leave_requests
+- id (uuid)
+- user_id (uuid FK)
+- type: enum('annual','sick','unpaid','other')
+- start_date
+- end_date
+- total_days (int)
+- reason (text)
+- status: enum('pending','approved','rejected','cancelled')
+- approver_id (uuid FK, nullable)
+- decided_at (timestamp, nullable)
+- created_at, updated_at
+
+Endpoints:
+
+- GET   /api/leave-requests
+  - Admin: all
+  - Manager: only for users in their team
+  - Sales: only own
+- GET   /api/leave-requests/:id
+- POST  /api/leave-requests        // only sales can create for themselves
+- PUT   /api/leave-requests/:id    // edit if pending and owner
+- POST  /api/leave-requests/:id/approve  // admin/manager only
+- POST  /api/leave-requests/:id/reject   // admin/manager only
+
+When approving:
+- update leave_balances for that user/year:  
+  annual_leave_used_days += total_days (if type = 'annual')
+
+### Frontend (Admin)
+
+Sidebar:
+- "İzin Talepleri" → /leave-requests
+
+Pages:
+
+1) LeaveRequestsListPage
+   - Route: /leave-requests
+   - Table: user_name, type, start_date, end_date, total_days, status
+   - Filters: status, user, date range
+   - For managers/admin:
+     - actions: Approve, Reject (buttons)
+
+2) LeaveRequestDetailPage
+   - Route: /leave-requests/:id
+   - Shows full info + Approve/Reject for authorized roles.
+
+=====================================================
+ 4) ANNOUNCEMENTS MODULE
+=====================================================
+
+### Backend
+
+Table: announcements
+- id (uuid)
+- title
+- message
+- type: enum('announcement','campaign','target_info','warning')
+- audience_type: enum('all','role','team','user')
+- audience_role (nullable)
+- audience_team_id (nullable)
+- audience_user_id (nullable)
+- created_by_user_id (uuid FK)
+- created_at
+- expires_at (nullable)
+
+Endpoints:
+
+- GET  /api/announcements
+  - Return only announcements visible for current user:
+    - all
+    - or matching their role / team / user
+    - and not expired
+- POST /api/announcements   // admin + manager (manager → limited to their team or role/team)
+- PUT  /api/announcements/:id
+- DELETE /api/announcements/:id
+
+### Frontend (Admin)
+
+Sidebar:
+- "Duyurular" → /announcements
+
+Pages:
+
+1) AnnouncementsListPage
+   - Route: /announcements
+   - Table: title, type, audience_type, created_at, expires_at
+   - Actions: Edit, Delete
+
+2) AnnouncementCreatePage
+   - Route: /announcements/new
+   - Fields:
+     - title
+     - message (textarea)
+     - type
+     - audience_type
+     - depending on audience_type, show:
+       - role select OR team select OR user select
+     - expires_at
+   - POST /api/announcements
+
+3) AnnouncementEditPage
+   - Route: /announcements/:id/edit
+
+=====================================================
+ 5) APPOINTMENTS / AGENDA MODULE
+=====================================================
+
+### Backend
+
+Table: appointments
+- id (uuid)
+- school_id (uuid FK)
+- user_id (uuid FK → sales user)
+- type: enum('visit','call','online_meeting')
+- start_datetime (timestamp)
+- end_datetime (timestamp)
+- status: enum('planned','done','cancelled')
+- notes (text, nullable)
+- created_at, updated_at
+
+Endpoints:
+
+- GET   /api/appointments (filters: date range, user, school, status)
+- GET   /api/appointments/:id
+- POST  /api/appointments    // admin/manager can assign; sales can create for themselves
+- PUT   /api/appointments/:id
+- DELETE /api/appointments/:id
+- POST  /api/appointments/:id/mark-done  // convenience endpoint
+
+RBAC:
+- admin: all
+- manager: their team
+- sales: only own
+
+### Frontend (Admin)
+
+Sidebar:
+- "Ajanda" → /appointments
+
+Pages:
+
+1) AppointmentsListPage
+   - Route: /appointments
+   - List view: date/time, school_name, user_name, type, status
+   - Filters: date range, user, school, status
+
+(We can add calendar UI later; for now, list + filters is enough.)
+
+=====================================================
+ 6) BASIC DASHBOARD
+=====================================================
+
+Create a simple overview dashboard page at route "/".
+
+Backend: create a single endpoint:
+
+GET /api/dashboard/summary
+- For the current user (respect role):
+  - total_schools
+  - total_visits (in last 30 days)
+  - total_offers (last 30 days)
+  - total_sales (last 30 days)
+  - total_revenue (last 30 days)
+  - upcoming_appointments_count (next 7 days)
+
+RBAC:
+- admin → all data
+- manager → only their team
+- sales → only their own
+
+Frontend:
+- DashboardPage at "/"
+- Show 4–6 cards with these metrics
+- Use Tailwind to make it look clean and modern.
+
+=====================================================
+ GENERAL REQUIREMENTS
+=====================================================
+
+- Keep code consistent with existing structure.
+- Use TypeScript everywhere.
+- Use existing auth middleware and axios instance.
+- All new routes must be wrapped in ProtectedRoute on frontend.
+- All major UI texts should be using i18n (TR/EN), but you can add minimal keys now.
+- Focus on creating a solid, working skeleton for each module (CRUD + basic filters).
+- Do not overcomplicate; we will refine later.
+
+Implement all of the above in the current backend and admin frontend projects.

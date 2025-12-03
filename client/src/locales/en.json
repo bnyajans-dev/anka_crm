@@ -4,6 +4,12 @@
     "logout": "Logout",
     "dashboard": "Dashboard",
     "schools": "Schools",
+    "visits": "Visits",
+    "offers": "Offers",
+    "sales": "Sales",
+    "leave_requests": "Leave Requests",
+    "announcements": "Announcements",
+    "appointments": "Agenda",
     "add_new": "Add New",
     "save": "Save",
     "cancel": "Cancel",
@@ -12,11 +18,16 @@
     "search": "Search...",
     "welcome": "Welcome Back",
     "confirm_delete": "Confirm Delete",
-    "delete_description": "Are you sure you want to delete this school? This action cannot be undone.",
+    "delete_description": "Are you sure you want to delete this record? This action cannot be undone.",
     "yes_delete": "Yes, Delete",
     "no_cancel": "No, Cancel",
     "success": "Success",
-    "error": "Error"
+    "error": "Error",
+    "status": "Status",
+    "date": "Date",
+    "user": "User",
+    "actions": "Actions",
+    "loading": "Loading..."
   },
   "auth": {
     "email": "Email Address",
@@ -34,12 +45,45 @@
     "district": "District",
     "contact_person": "Contact Person",
     "contact_phone": "Contact Phone",
-    "actions": "Actions",
     "success_add": "School successfully added",
     "success_update": "School successfully updated",
     "success_delete": "School successfully deleted",
     "form_title": "School Information",
-    "form_subtitle": "Please enter the school details",
-    "loading": "Loading..."
+    "form_subtitle": "Please enter the school details"
+  },
+  "visits": {
+    "title": "Visits List",
+    "new_visit": "New Visit",
+    "visit_date": "Visit Date",
+    "school": "School",
+    "status_planned": "Planned",
+    "status_done": "Done",
+    "status_cancelled": "Cancelled",
+    "notes": "Notes",
+    "next_step": "Next Step"
+  },
+  "offers": {
+    "title": "Offers",
+    "new_offer": "New Offer",
+    "tour_name": "Tour Name",
+    "student_count": "Student Count",
+    "total_price": "Total Price",
+    "status_draft": "Draft",
+    "status_sent": "Sent",
+    "status_accepted": "Accepted"
+  },
+  "sales": {
+    "title": "Sales",
+    "new_sale": "Close Sale",
+    "revenue": "Revenue",
+    "payment_status": "Payment Status"
+  },
+  "dashboard_metrics": {
+    "total_schools": "Total Schools",
+    "total_visits": "Visits (30 Days)",
+    "total_offers": "Offers",
+    "total_sales": "Sales",
+    "total_revenue": "Total Revenue",
+    "upcoming_appointments": "Upcoming Appts"
   }
 }

@@ -7,7 +7,13 @@ import {
   PlusCircle, 
   LogOut, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Briefcase,
+  FileText,
+  CreditCard,
+  Calendar,
+  Megaphone,
+  Clock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -32,10 +38,35 @@ export function Sidebar() {
       href: '/schools'
     },
     {
-      title: t('schools.new_school'),
-      icon: PlusCircle,
-      href: '/schools/new'
-    }
+      title: t('common.visits'),
+      icon: Briefcase,
+      href: '/visits'
+    },
+    {
+      title: t('common.offers'),
+      icon: FileText,
+      href: '/offers'
+    },
+    {
+      title: t('common.sales'),
+      icon: CreditCard,
+      href: '/sales'
+    },
+    {
+      title: t('common.leave_requests'),
+      icon: Calendar,
+      href: '/leave-requests'
+    },
+    {
+      title: t('common.announcements'),
+      icon: Megaphone,
+      href: '/announcements'
+    },
+    {
+      title: t('common.appointments'),
+      icon: Clock,
+      href: '/appointments'
+    },
   ];
 
   return (

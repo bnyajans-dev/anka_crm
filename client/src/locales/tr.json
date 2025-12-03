@@ -4,6 +4,12 @@
     "logout": "Çıkış",
     "dashboard": "Panel",
     "schools": "Okullar",
+    "visits": "Ziyaretler",
+    "offers": "Teklifler",
+    "sales": "Satışlar",
+    "leave_requests": "İzin Talepleri",
+    "announcements": "Duyurular",
+    "appointments": "Ajanda",
     "add_new": "Yeni Ekle",
     "save": "Kaydet",
     "cancel": "İptal",
@@ -12,11 +18,16 @@
     "search": "Ara...",
     "welcome": "Tekrar Hoşgeldiniz",
     "confirm_delete": "Silmeyi Onayla",
-    "delete_description": "Bu okulu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+    "delete_description": "Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
     "yes_delete": "Evet, Sil",
     "no_cancel": "Hayır, İptal",
     "success": "Başarılı",
-    "error": "Hata"
+    "error": "Hata",
+    "status": "Durum",
+    "date": "Tarih",
+    "user": "Kullanıcı",
+    "actions": "İşlemler",
+    "loading": "Yükleniyor..."
   },
   "auth": {
     "email": "E-posta Adresi",
@@ -34,12 +45,45 @@
     "district": "İlçe",
     "contact_person": "İletişim Kişisi",
     "contact_phone": "İletişim Telefonu",
-    "actions": "İşlemler",
     "success_add": "Okul başarıyla eklendi",
     "success_update": "Okul başarıyla güncellendi",
     "success_delete": "Okul başarıyla silindi",
     "form_title": "Okul Bilgileri",
-    "form_subtitle": "Lütfen okul detaylarını giriniz",
-    "loading": "Yükleniyor..."
+    "form_subtitle": "Lütfen okul detaylarını giriniz"
+  },
+  "visits": {
+    "title": "Ziyaret Listesi",
+    "new_visit": "Yeni Ziyaret",
+    "visit_date": "Ziyaret Tarihi",
+    "school": "Okul",
+    "status_planned": "Planlandı",
+    "status_done": "Tamamlandı",
+    "status_cancelled": "İptal",
+    "notes": "Notlar",
+    "next_step": "Sonraki Adım"
+  },
+  "offers": {
+    "title": "Teklifler",
+    "new_offer": "Yeni Teklif",
+    "tour_name": "Tur Adı",
+    "student_count": "Öğrenci Sayısı",
+    "total_price": "Toplam Fiyat",
+    "status_draft": "Taslak",
+    "status_sent": "Gönderildi",
+    "status_accepted": "Kabul Edildi"
+  },
+  "sales": {
+    "title": "Satışlar",
+    "new_sale": "Satışı Kapat",
+    "revenue": "Ciro",
+    "payment_status": "Ödeme Durumu"
+  },
+  "dashboard_metrics": {
+    "total_schools": "Toplam Okul",
+    "total_visits": "Ziyaretler (30 Gün)",
+    "total_offers": "Teklifler",
+    "total_sales": "Satışlar",
+    "total_revenue": "Toplam Ciro",
+    "upcoming_appointments": "Yaklaşan Randevular"
   }
 }

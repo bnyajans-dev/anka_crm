@@ -10,6 +10,17 @@ import Login from "@/pages/Login";
 import SchoolList from "@/pages/SchoolList";
 import SchoolForm from "@/pages/SchoolForm";
 import SchoolEdit from "@/pages/SchoolEdit";
+import Dashboard from "@/pages/Dashboard";
+import VisitsList from "@/pages/Visits/VisitsList";
+import VisitCreate from "@/pages/Visits/VisitCreate";
+import VisitEdit from "@/pages/Visits/VisitEdit";
+import OffersList from "@/pages/Offers/OffersList";
+import OfferCreate from "@/pages/Offers/OfferCreate";
+import OfferEdit from "@/pages/Offers/OfferEdit";
+import SalesList from "@/pages/Sales/SalesList";
+import AnnouncementsList from "@/pages/Announcements/AnnouncementsList";
+import LeaveRequestsList from "@/pages/Leaves/LeaveRequestsList";
+import AppointmentsList from "@/pages/Appointments/AppointmentsList";
 import { Layout } from "@/components/layout/Layout";
 import NotFound from "@/pages/not-found";
 
@@ -34,8 +45,17 @@ function Router() {
     <Routes>
       <Route path="/login" element={<Login />} />
       
-      <Route path="/" element={<Navigate to="/schools" replace />} />
-      <Route path="/dashboard" element={<Navigate to="/schools" replace />} />
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
       
       <Route path="/schools" element={
         <ProtectedRoute>
@@ -54,6 +74,20 @@ function Router() {
           <SchoolEdit />
         </ProtectedRoute>
       } />
+
+      <Route path="/visits" element={<ProtectedRoute><VisitsList /></ProtectedRoute>} />
+      <Route path="/visits/new" element={<ProtectedRoute><VisitCreate /></ProtectedRoute>} />
+      <Route path="/visits/:id/edit" element={<ProtectedRoute><VisitEdit /></ProtectedRoute>} />
+      
+      <Route path="/offers" element={<ProtectedRoute><OffersList /></ProtectedRoute>} />
+      <Route path="/offers/new" element={<ProtectedRoute><OfferCreate /></ProtectedRoute>} />
+      <Route path="/offers/:id/edit" element={<ProtectedRoute><OfferEdit /></ProtectedRoute>} />
+
+      <Route path="/sales" element={<ProtectedRoute><SalesList /></ProtectedRoute>} />
+      
+      <Route path="/announcements" element={<ProtectedRoute><AnnouncementsList /></ProtectedRoute>} />
+      <Route path="/leave-requests" element={<ProtectedRoute><LeaveRequestsList /></ProtectedRoute>} />
+      <Route path="/appointments" element={<ProtectedRoute><AppointmentsList /></ProtectedRoute>} />
       
       <Route path="*" element={<NotFound />} />
     </Routes>
