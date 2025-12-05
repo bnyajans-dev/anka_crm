@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Sidebar, MobileSidebar } from './Sidebar';
 import { Header } from './Header';
+import { MobileTabBar } from './MobileTabBar';
 
 export function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,11 +18,14 @@ export function Layout({ children }: { children: ReactNode }) {
       
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         <Header onMobileMenuToggle={() => setMobileMenuOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/20">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-muted/20 pb-20 md:pb-6">
           <div className="max-w-6xl mx-auto w-full">
             {children}
           </div>
         </main>
+        
+        {/* Mobile Tab Bar */}
+        <MobileTabBar />
       </div>
     </div>
   );

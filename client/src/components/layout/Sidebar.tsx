@@ -19,7 +19,9 @@ import {
   FileSearch,
   Smartphone,
   Settings,
-  Map
+  Map,
+  Target,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -169,6 +171,24 @@ function useNavItems() {
       icon: Map,
       href: '/reports/map',
       roles: ['system_admin', 'admin', 'manager']
+    },
+    {
+      title: 'Hedefler',
+      icon: Target,
+      href: '/targets',
+      roles: ['system_admin', 'admin', 'manager', 'sales']
+    },
+    {
+      title: 'Aktivite',
+      icon: Activity,
+      href: '/activity',
+      roles: ['system_admin', 'admin', 'manager']
+    },
+    {
+      title: 'Yetki Matrisi',
+      icon: Shield,
+      href: '/permissions',
+      roles: ['system_admin']
     }
   ];
 

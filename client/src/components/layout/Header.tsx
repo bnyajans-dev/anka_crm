@@ -1,16 +1,21 @@
 import { useTranslation } from 'react-i18next';
 import { 
   Globe,
-  Menu
+  Menu,
+  Sun,
+  Moon,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
   DropdownMenuItem, 
-  DropdownMenuTrigger 
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth';
+import { useTheme } from '@/components/ThemeProvider';
 import NotificationsPopover from '../NotificationsPopover';
 import { Badge } from '@/components/ui/badge';
 import logo from '@assets/generated_images/minimalist_phoenix_logo_for_anka_travel.png';
@@ -22,6 +27,7 @@ interface HeaderProps {
 export function Header({ onMobileMenuToggle }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const changeLanguage = (lng: string) => {
     i18n.changeLanguage(lng);
@@ -29,11 +35,11 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
 
   const getRoleColor = (role?: string) => {
     switch (role) {
-        case 'system_admin': return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
-        case 'admin': return 'bg-red-100 text-red-800 hover:bg-red-200';
-        case 'manager': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-        case 'sales': return 'bg-green-100 text-green-800 hover:bg-green-200';
-        default: return 'bg-gray-100 text-gray-800';
+        case 'system_admin': return 'bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200';
+        case 'admin': return 'bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-200';
+        case 'manager': return 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200';
+        case 'sales': return 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200';
+        default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
     }
   };
 
@@ -74,6 +80,21 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-2 md:gap-3">
+        {/* Theme Toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full"
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          data-testid="button-theme-toggle"
+        >
+          {theme === 'dark' ? (
+            <Sun className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <Moon className="h-4 w-4 text-muted-foreground" />
+          )}
+        </Button>
+
         {/* Language Switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

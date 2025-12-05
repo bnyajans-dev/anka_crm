@@ -1,0 +1,330 @@
+You are a senior TypeScript + React + Node.js developer working on a CRM project for a Turkish school tour company called **Anka Travel**.
+
+Tech stack (already in the repo):
+- Frontend: React + TypeScript + Vite, shadcn/ui, Tailwind, React Router, React Hook Form, Zod, TanStack Query, i18next, react-i18next, react-leaflet, recharts, framer-motion.
+- Backend: Node.js + Express + TypeScript, Drizzle ORM, PostgreSQL.
+- Auth: Session / cookie-based with roles like: "system_admin" | "admin" | "manager" | "sales".
+- The app is already running in production on a Ubuntu server, with PostgreSQL database and migrations.
+
+IMPORTANT CONSTRAINTS:
+- Do NOT rework the entire i18n system. Turkish language and translations are already mostly configured.
+- Do NOT break existing login, roles, basic CRUD for schools/visits/offers/sales.
+- Keep TypeScript strict and `npm run build` MUST pass at the end.
+- Make all new UI labels/messages in Turkish (using existing i18n setup if possible).
+
+GOAL:
+Add a set of professional features on top of the existing app:
+
+1) Theming & visual improvements
+2) Advanced dashboard & reports
+3) Tour cost (gider) management per sale
+4) Notification center & activity feed
+5) Role-based targets & permission matrix UI
+6) Better mobile UX (tab bar style + responsive polish)
+7) Simple AI helpers (offer suggestion / text generator stub)
+
+------------------------------------------------
+1) THEME, COLOR PALETTE & VISUAL IMPROVEMENTS
+------------------------------------------------
+
+Requirements:
+
+- Implement a clean **light/dark theme toggle**, if not already:
+  - Use `next-themes` (already in dependencies) or the existing theme system.
+  - Add a small theme toggle button in the top-right of the main layout (e.g. a sun/moon icon using `lucide-react`).
+  - Remember the user’s theme preference (localStorage via next-themes).
+
+- Define a consistent **color palette** in Tailwind / shadcn theme:
+  - primary: a modern blue (e.g. #2563EB)
+  - secondary/accent: a soft yellow (e.g. #FACC15)
+  - background (light): #F1F5F9
+  - background (dark): #0F172A
+- Apply these colors to:
+  - Primary buttons
+  - Links
+  - Active menu item in sidebar
+  - Important stats on the dashboard
+
+- Use `lucide-react` icons for sidebar navigation:
+  - Example:
+    - Dashboard → `LayoutDashboard`
+    - Okullar → `School` or similar
+    - Ziyaretler → `MapPin`
+    - Teklifler → `FileText`
+    - Satışlar → `Handshake`
+    - Raporlar → `BarChart3`
+    - Kullanıcılar → `Users`
+    - Ayarlar → `Settings`
+
+- Use `framer-motion` for subtle animations:
+  - Fade/slide-in for dashboard cards.
+  - Small hover animation on main cards (scale 1.0 → 1.02).
+- Ensure animations are subtle, not annoying.
+
+------------------------------------------------
+2) ADVANCED DASHBOARD & REPORTS
+------------------------------------------------
+
+We already have entities like:
+- User, Visit, Offer, Sale, SalesTarget, Commission, Appointment, TourDefinition, School, etc.
+
+Goal:
+Make the dashboard truly useful for managers and sales.
+
+Add/extend a main Dashboard page with:
+
+A) KPI cards (top of page)
+- Total Ziyaret (this month & this year)
+- Toplam Teklif
+- Toplam Satış
+- Toplam Ciro (TRY)
+- Dönüşüm Oranı (Teklif → Satış)
+
+B) Charts using `recharts`:
+1. **Aylara Göre Satış Grafiği**
+   - Bar or line chart: `Ay` vs `Satış Tutarı`.
+   - Data from `Sales` grouped by month.
+
+2. **Satışçı Bazlı Performans**
+   - Bar chart: each `User (sales role)` vs:
+     - ziyaret sayısı
+     - teklif sayısı
+     - satış sayısı
+   - Show as grouped bars or multiple charts.
+
+3. **Teklif Durum Dağılımı**
+   - Pie chart: `draft / sent / negotiation / accepted / rejected`.
+
+4. **En Çok Satılan Turlar**
+   - Horizontal bar chart:
+     - tour_name vs toplam ciro / satış sayısı.
+
+C) Quick tables / lists:
+- “Bugünkü Randevularım” (appointments for current user).
+- “Son Oluşturulan Teklifler” (last 5 offers).
+- “Son Gerçekleşen Satışlar” (last 5 sales).
+
+Add props/filters:
+- Top area dropdown with:
+  - Dönem: Bu Ay / Bu Yıl / Tümü
+  - Satışçı: Tümü / specific user
+- When filters change, reload stats via TanStack Query backend endpoints (create simple API routes if needed, like `/api/dashboard/summary` and `/api/dashboard/charts`).
+
+------------------------------------------------
+3) TOUR COST (GİDER) MANAGEMENT PER SALE
+------------------------------------------------
+
+We previously discussed that each sale (a tour) has costs (fuel, food, driver, etc.).
+
+Goal:
+- For each `Sale`, allow entering **cost items** (gider kalemleri) and show:
+  - Toplam gider
+  - Net kâr (satış tutarı – gider toplamı)
+
+Backend / Types:
+
+- Create a new entity/interface, for example:
+
+  interface SaleCostItem {
+    id: number;
+    sale_id: number;
+    type: 'yakıt' | 'yemek' | 'rehber' | 'otel' | 'araç_kiralama' | 'diğer';
+    description?: string;
+    amount: number;
+    currency: string; // probably same as sale (TRY)
+    date: string;
+    created_by_user_id: number;
+  }
+
+- Add a Drizzle table and backend routes for:
+  - `GET /api/sales/:id/costs`
+  - `POST /api/sales/:id/costs`
+  - `PUT /api/sales/:id/costs/:costId`
+  - `DELETE /api/sales/:id/costs/:costId`
+- Restrict who can edit cost items:
+  - Only `admin` and maybe `system_admin` or specific finance role (you can add a simple check: sales role cannot edit costs by default).
+
+Frontend:
+
+- On the **Sale detail** screen (or an expanded row on Sales list), add a new section/tab: "Giderler".
+- In that section:
+  - Show a table of cost items with:
+    - Tür, Açıklama, Tutar, Tarih
+  - Show summary:
+    - Toplam Gider: X TL
+    - Satış Tutarı: Y TL
+    - Net Kâr: (Y - X) TL
+  - Provide a form (modal or inline) to add/edit/delete cost items.
+  - All labels in Turkish.
+
+Optional:
+- Add a report "Kârlılık Raporu" in the Raporlar module:
+  - List tours/sales with:
+    - Satış tutarı
+    - Toplam gider
+    - Net kâr
+    - Kâr marjı %
+
+------------------------------------------------
+4) NOTIFICATION CENTER & ACTIVITY FEED
+------------------------------------------------
+
+We already have an `AuditLog` type and some audit logging.
+
+Goal:
+
+A) Notification Center:
+- Add a bell icon in the top bar.
+- When clicked, open a dropdown or side panel showing recent notifications.
+- Types of notifications (initial simple version):
+  - Yeni teklif oluşturuldu (for relevant manager/admin)
+  - Teklif kabul edildi → satışa dönüştü
+  - Yönetici tarafından yeni hedef atandı
+- Represent notifications with a simple in-memory / database `Notification` model (if you want):
+  - id, user_id, type, title, message, created_at, is_read
+
+- Add a small unread dot on the bell icon if there are unread items.
+- Provide “Tümünü okundu işaretle” action.
+
+B) Activity Feed:
+- Add a page or side panel: "Aktivite Geçmişi".
+- Use `AuditLog` to show:
+  - Tarih
+  - Kullanıcı
+  - İşlem (ör: "Yeni ziyaret oluşturuldu", "Teklif güncellendi", "Satış oluşturuldu").
+  - İlgili kayıt (okul adı, teklif no vb.)
+
+------------------------------------------------
+5) ROLE-BASED TARGETS & PERMISSION MATRIX UI
+------------------------------------------------
+
+We already have a `SalesTarget` structure and roles.
+
+Goal:
+
+A) Sales Targets UI:
+- Create a page "Hedefler" (under Raporlar or separate menu).
+- On this page:
+  - Admin/Manager/System Admin can:
+    - Seç: Yıl, Ay, Satışçı.
+    - Yeni hedef oluştur:
+      - Ziyaret hedefi
+      - Teklif hedefi
+      - Satış adedi hedefi
+      - Ciro hedefi
+  - Sales user:
+    - Sadece kendi hedeflerini ve gerçekleşen rakamları görsün:
+      - Hedef vs Gerçek (progress bar veya kart).
+      - Örn: "Bu ay 20 ziyaret hedefi / 12 gerçekleşen (%60)".
+
+- Attach these stats to dashboard as well:
+  - On the dashboard for a sales user:
+    - A card: "Bu ayki hedeflerim" with progress bars.
+
+B) Permission Matrix (basic version in UI only):
+- Create a system admin page "Yetki Matrisi" (only `system_admin` can see).
+- Show a table:
+  - Rows: Roller (system_admin, admin, manager, sales).
+  - Columns: Modüller (Okullar, Ziyaretler, Teklifler, Satışlar, Giderler, Hedefler, Kullanıcılar, Raporlar, Ayarlar).
+  - For now, hard-code or semi-static checkboxes indicating:
+    - Görebilir (view)
+    - Oluşturabilir (create)
+    - Düzenleyebilir (edit)
+    - Silebilir (delete)
+- You don’t have to make this fully dynamic RBAC from database; a UI + mapping in config is enough.
+- The important part:
+  - Use this mapping in route guards / component guards to optionally hide actions that a given role should not use (e.g. sales cannot edit costs).
+
+------------------------------------------------
+6) BETTER MOBILE UX (TAB BAR STYLE + RESPONSIVE POLISH)
+------------------------------------------------
+
+We already fixed the mobile sidebar as a drawer. Now:
+
+Goal:
+- Make the app feel like a mobile app when used on phone.
+
+Implementation ideas:
+
+- On small screens (`sm` and below):
+  - Add a bottom tab bar with key sections:
+    - Ana Sayfa (dashboard)
+    - Ziyaretler
+    - Teklifler
+    - Satışlar
+    - Profil
+  - Use `NavLink` and `lucide-react` icons.
+  - Hide or minimize the left sidebar on mobile; use either:
+    - Only bottom tab bar for main navigation.
+    - Keep sidebar only accessible from a hamburger button if needed.
+
+- Ensure:
+  - Forms are mobile-friendly (full-width inputs, proper spacing).
+  - Tables on mobile are either scrollable horizontally or rendered as cards.
+
+- Fix navigation so:
+  - On mobile, user can comfortably switch between main sections with one tap.
+
+------------------------------------------------
+7) SIMPLE AI HELPERS (OFFER SUGGESTION / TEXT GENERATOR STUB)
+------------------------------------------------
+
+We don’t have to actually call an external LLM, but we want to design the UI and stub integration so it’s ready.
+
+Goal:
+- On the "Teklif Oluştur" form:
+  - Add a button like: "Yapay zeka ile teklif metni öner" (AI suggestion).
+- When clicked:
+  - For now, call a stub endpoint like `POST /api/ai/suggest-offer-text` sending:
+    - school info,
+    - tour info,
+    - student count,
+    - date range.
+  - The backend can return a dummy or template text (you can implement a simple function that generates a nice Turkish text using available fields).
+
+UI behavior:
+- Show a small overlay/spinner "Teklif metni hazırlanıyor..."
+- Then fill a textarea (e.g. "Teklif açıklaması" or "Ek not") with the returned text, which user can still edit manually.
+
+Optionally:
+- Similar AI helper in the "Notlar" or "Açıklama" field for visits or sales.
+
+Important:
+- Keep all AI-related texts in Turkish.
+- Structure the code so that in the future we can swap the stub with a real AI call.
+
+------------------------------------------------
+GENERAL IMPLEMENTATION NOTES
+------------------------------------------------
+
+- Keep code modular; create new components for:
+  - Dashboard widgets & charts
+  - Cost items section for Sales
+  - Notification dropdown / center
+  - Hedefler (targets) page
+  - Yetki matrisi page
+  - Mobile tab bar navigation
+
+- Make sure:
+  - `npm run build` passes.
+  - TypeScript errors are resolved.
+  - Existing endpoints/routes and current behavior continue to function.
+  - New routes/pages are added to the router with meaningful paths:
+    - `/dashboard`
+    - `/reports`
+    - `/targets`
+    - `/sales/:id` (with costs section)
+    - `/activity`
+    - `/permissions` (for system_admin)
+    - etc. (adapt to current routing structure).
+
+At the end, show me:
+- A list of files you added or modified.
+- Short summary for each key feature:
+  - Dashboard improvements
+  - Cost/gider management
+  - Notification center & activity log UI
+  - Targets & permission matrix
+  - Mobile UX (tab bar)
+  - AI offer suggestion UI stub
+and how to access/test them from the UI.

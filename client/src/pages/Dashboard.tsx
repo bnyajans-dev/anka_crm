@@ -1,13 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/auth';
-import { api, User, Visit, Offer, Sale, SalesTarget } from '@/lib/mockApi';
+import { api, User, Visit, Offer, Sale, SalesTarget, Appointment } from '@/lib/mockApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { School, Briefcase, CheckCircle, CreditCard, TrendingUp, Users, Calendar, Loader2 } from 'lucide-react';
+import { School, Briefcase, CheckCircle, CreditCard, TrendingUp, Users, Calendar, Loader2, Clock, FileText, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
 import { 
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
@@ -28,6 +32,7 @@ export default function Dashboard() {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [sales, setSales] = useState<Sale[]>([]);
   const [targets, setTargets] = useState<SalesTarget[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
 
   const isManager = user?.role === 'manager' || user?.role === 'admin' || user?.role === 'system_admin';
   const isSales = user?.role === 'sales';
@@ -35,18 +40,20 @@ export default function Dashboard() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const [usersData, visitsData, offersData, salesData, targetsData] = await Promise.all([
+      const [usersData, visitsData, offersData, salesData, targetsData, appointmentsData] = await Promise.all([
         api.users.list(),
         api.visits.list(),
         api.offers.list(),
         api.sales.list(),
-        api.targets.list()
+        api.targets.list(),
+        api.appointments.list()
       ]);
       setUsers(usersData.filter(u => u.role === 'sales'));
       setVisits(visitsData);
       setOffers(offersData);
       setSales(salesData);
       setTargets(targetsData);
+      setAppointments(appointmentsData);
       setLoading(false);
     };
     load();
@@ -497,6 +504,172 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       )}
+
+      {/* Quick Tables: Today's Appointments, Recent Offers, Recent Sales */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        {/* Today's Appointments */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  Bugünkü Randevularım
+                </div>
+                <Link to="/appointments" className="text-xs text-muted-foreground hover:text-primary">
+                  Tümünü Gör <ArrowRight className="inline h-3 w-3" />
+                </Link>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                
+                const todayAppts = appointments.filter(a => {
+                  const apptDate = new Date(a.start_datetime);
+                  return apptDate >= today && apptDate < tomorrow && 
+                         (isSales ? a.user_id === user?.id : true);
+                }).slice(0, 5);
+
+                if (todayAppts.length === 0) {
+                  return (
+                    <div className="text-center py-6 text-muted-foreground">
+                      <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Bugün randevunuz yok</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {todayAppts.map(appt => (
+                      <div key={appt.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-xs">
+                          {format(new Date(appt.start_datetime), 'HH:mm')}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{appt.school_name}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{appt.type.replace('_', ' ')}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {appt.status === 'planned' ? 'Planlandı' : appt.status === 'done' ? 'Tamamlandı' : 'İptal'}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Recent Offers */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  Son Teklifler
+                </div>
+                <Link to="/offers" className="text-xs text-muted-foreground hover:text-primary">
+                  Tümünü Gör <ArrowRight className="inline h-3 w-3" />
+                </Link>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {offers.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <FileText className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Henüz teklif yok</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {offers.slice(0, 5).map(offer => (
+                    <div key={offer.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{offer.school_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{offer.tour_name}</p>
+                      </div>
+                      <Badge className={`text-[10px] ${
+                        offer.status === 'accepted' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200' :
+                        offer.status === 'rejected' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200' :
+                        offer.status === 'sent' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' :
+                        'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+                      }`}>
+                        {offer.status === 'draft' ? 'Taslak' :
+                         offer.status === 'sent' ? 'Gönderildi' :
+                         offer.status === 'negotiation' ? 'Görüşme' :
+                         offer.status === 'accepted' ? 'Kabul' : 'Red'}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Recent Sales */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <Card className="h-full">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-primary" />
+                  Son Satışlar
+                </div>
+                <Link to="/sales" className="text-xs text-muted-foreground hover:text-primary">
+                  Tümünü Gör <ArrowRight className="inline h-3 w-3" />
+                </Link>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-0">
+              {sales.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Briefcase className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-sm">Henüz satış yok</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sales.slice(0, 5).map(sale => (
+                    <Link key={sale.id} to={`/sales/${sale.id}`} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{sale.school_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{sale.offer_tour_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-green-600">
+                          {sale.final_revenue_amount.toLocaleString('tr-TR')} ₺
+                        </p>
+                        <Badge variant="outline" className="text-[10px]">
+                          {sale.payment_status === 'paid' ? 'Ödendi' :
+                           sale.payment_status === 'partial' ? 'Kısmi' : 'Bekliyor'}
+                        </Badge>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      </div>
     </div>
   );
 }

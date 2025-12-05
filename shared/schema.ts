@@ -225,6 +225,21 @@ export const attachments = pgTable("attachments", {
   uploaded_by_user_id: integer("uploaded_by_user_id").references(() => users.id).notNull(),
 });
 
+// Notifications Table
+export const notificationTypeEnum = pgEnum('notification_type', ['offer_created', 'offer_accepted', 'sale_created', 'target_assigned', 'visit_created', 'system']);
+
+export const notifications = pgTable("notifications", {
+  id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+  user_id: integer("user_id").references(() => users.id).notNull(),
+  type: notificationTypeEnum("type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  is_read: boolean("is_read").default(false).notNull(),
+  related_type: text("related_type"),
+  related_id: integer("related_id"),
+  created_at: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Expenses Table (Giderler)
 export const expenses = pgTable("expenses", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
@@ -339,6 +354,13 @@ export const expensesRelations = relations(expenses, ({ one }) => ({
   }),
 }));
 
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.user_id],
+    references: [users.id],
+  }),
+}));
+
 // Insert Schemas
 export const insertTeamSchema = createInsertSchema(teams, {
   name: z.string().min(1),
@@ -363,6 +385,7 @@ export const insertSalesTargetSchema = createInsertSchema(salesTargets).omit({ i
 export const insertCommissionSchema = createInsertSchema(commissions).omit({ id: true, created_at: true });
 export const insertAttachmentSchema = createInsertSchema(attachments).omit({ id: true, uploaded_at: true });
 export const insertExpenseSchema = createInsertSchema(expenses).omit({ id: true, created_at: true, updated_at: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, created_at: true });
 
 // Select Types
 export type Team = typeof teams.$inferSelect;
@@ -381,6 +404,7 @@ export type SalesTarget = typeof salesTargets.$inferSelect;
 export type Commission = typeof commissions.$inferSelect;
 export type Attachment = typeof attachments.$inferSelect;
 export type Expense = typeof expenses.$inferSelect;
+export type Notification = typeof notifications.$inferSelect;
 
 // Insert Types
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
@@ -399,3 +423,4 @@ export type InsertSalesTarget = z.infer<typeof insertSalesTargetSchema>;
 export type InsertCommission = z.infer<typeof insertCommissionSchema>;
 export type InsertAttachment = z.infer<typeof insertAttachmentSchema>;
 export type InsertExpense = z.infer<typeof insertExpenseSchema>;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
