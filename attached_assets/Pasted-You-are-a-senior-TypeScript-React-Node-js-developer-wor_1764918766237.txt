@@ -1,0 +1,155 @@
+You are a senior TypeScript + React + Node.js developer working on a CRM project for a Turkish school tour company called **Anka Travel**.
+
+Tech stack (already in the repo):
+- Frontend: React + TypeScript + Vite, shadcn/ui, Tailwind, React Router, React Hook Form, Zod, TanStack Query, i18next, react-i18next, react-leaflet, recharts.
+- Backend: Node.js + Express + TypeScript, Drizzle ORM, PostgreSQL.
+- Auth: Session / cookie-based with roles like: "system_admin" | "admin" | "manager" | "sales".
+
+IMPORTANT:
+The language/i18n setup is ALREADY configured and Turkish text is mostly done. Please DO NOT rework the entire i18n system. Only touch translation usage if needed for new UI elements you add or change.
+
+GOAL:
+Fix the following 3 issues:
+
+1) Mobile sidebar menu (left nav) covering the whole screen
+2) Login page success but staying on the login page (no redirect)
+3) "Kullanıcı Ekle" (Add User) resulting in 404
+
+Please carefully inspect the existing codebase and implement the following changes.
+
+------------------------------------------------
+1) FIX MOBILE SIDEBAR MENU (LEFT NAV) OVERLAY ISSUE
+------------------------------------------------
+
+Current problem:
+On mobile screens (phones), the left sidebar navigation menu covers the entire screen and hides the main content. It is not user-friendly.
+
+Goal:
+Make the layout responsive and mobile-friendly:
+- On DESKTOP (md and up):
+  - Left sidebar can stay visible as a normal admin dashboard layout (sidebar + main content).
+- On MOBILE (sm and below):
+  - Sidebar should NOT permanently cover the main content.
+  - Instead, there should be:
+    - A top bar with a hamburger menu button.
+    - When the user taps the hamburger icon, a drawer / sheet / off-canvas menu opens with the sidebar navigation.
+    - When the user closes the drawer or selects a menu item, the drawer should close and the main content remains visible.
+
+Implementation suggestions:
+- Identify the main layout component (for example: `AppLayout`, `DashboardLayout`, or similar).
+- Refactor the layout:
+  - Use Tailwind responsive classes (`hidden`, `block`, `md:hidden`, `md:flex`, etc.) and shadcn/ui components if available.
+  - For example:
+    - On mobile: hide the sidebar by default, show a top navbar with a menu button.
+    - Use a shadcn `Sheet` or `Dialog` (or your own component) to render the sidebar as an overlay drawer on small screens.
+    - On larger screens: keep the sidebar fixed/visible and main content next to it.
+- Important:
+  - Ensure the main content is scrollable on mobile.
+  - Ensure the menu does not permanently overlay everything on small screens.
+  - The UX should feel like a modern responsive admin panel.
+
+------------------------------------------------
+2) FIX LOGIN FLOW BUG (SUCCESS BUT STAYS ON LOGIN PAGE)
+------------------------------------------------
+
+Current problem:
+On the login screen:
+- When the user enters a correct email/password:
+  - A success message (e.g. toast) appears,
+  - BUT the app remains on the login page.
+  - If the user then presses the browser back button, the dashboard appears.
+
+This means:
+- The login API is working.
+- User/session info is probably stored somewhere (e.g. localStorage or context).
+- But client-side navigation/redirect is missing or incorrect.
+
+Goal:
+Implement a proper redirect after successful login.
+
+Implementation details:
+- Find the login component and login mutation (probably using TanStack Query `useMutation` and `api.auth.login`).
+- In the `onSuccess` handler:
+  - Save the user and token/session as the app expects (e.g. in localStorage key like `"anka_user"` and in any auth context/store).
+  - Then call React Router’s `useNavigate()`:
+    - Example: `navigate("/dashboard")` or whatever the main route is (could be `/` if dashboard is at root).
+- Ensure:
+  - After a successful login, the user is taken directly to the dashboard/main page.
+  - They should NOT remain on the login route.
+  - The bug where the user has to click "back" in the browser to see the app must be completely removed.
+- Keep text/messages in Turkish if you touch any toasts or labels (for example: "Giriş başarılı").
+
+Also check:
+- The route protection logic (PrivateRoute / RequireAuth / similar).
+- If a user is already logged in and visits `/login`, ideally redirect them to the dashboard.
+
+------------------------------------------------
+3) FIX "KULLANICI EKLE" (ADD USER) 404 ERROR
+------------------------------------------------
+
+Current problem:
+When clicking "Kullanıcı Ekle" (Add User), the app shows a 404 (route not found), or the request/API call returns 404. The “add user” flow is broken.
+
+Goal:
+Make the "Add User" route and form fully functional and integrated.
+
+Implementation details:
+
+1. Fix routing:
+   - Find where the "Kullanıcı Ekle" button is rendered (probably on the Users list page).
+   - Ensure the button navigates to a valid route, e.g. `/users/new` or similar.
+   - Add a corresponding `<Route path="/users/new" element={<UserCreatePage />} />` (or adapt to the project’s routing pattern).
+   - Make sure the 404 route does not catch this path accidentally.
+
+2. Implement or fix the User Create page:
+   - The page should render a proper form for creating a new user, with fields like:
+     - Ad (name)
+     - E-posta (email)
+     - Rol (role: system_admin / admin / manager / sales)
+     - Takım (team) — optional
+     - Bölge (region) — optional
+     - Sorumlu olduğu ilçeler (districts) — optional, maybe multi-select
+     - Aktif/Pasif durumu (is_active)
+   - Use React Hook Form + Zod schema for validation.
+   - Make sure labels/placeholders remain in Turkish and, if possible, use the existing i18n `t()` keys rather than hard-coded text.
+
+3. Connect to the correct API:
+   - If the project has a real backend endpoint like `POST /api/users`, wire the form’s submit handler to call that endpoint (via `api.users.create` or similar abstraction).
+   - If the current setup still uses a mock layer like `api.users.create` in `mockApi.ts`, then at least make sure this function is called and the UI updates accordingly.
+   - On success:
+     - Show a Turkish success toast such as "Kullanıcı başarıyla oluşturuldu".
+     - Redirect back to the users list page (e.g. `navigate("/users")`) and refresh the list (invalidate TanStack Query cache for users).
+
+4. No more 404:
+   - After your changes, clicking "Kullanıcı Ekle" must:
+     - Open a real form route (not 404),
+     - Allow saving the user,
+     - Navigate back properly after save.
+
+------------------------------------------------
+GENERAL CONSTRAINTS
+------------------------------------------------
+
+- Do NOT re-architect the entire project.
+- Do NOT rewrite the i18n system; it is already configured. Only:
+  - Use existing `t()` usage correctly,
+  - Add keys only if needed for new labels/buttons.
+- Keep TypeScript happy; fix any type errors you introduce.
+- Keep the code clean; remove unused imports and avoid dead code.
+
+After your changes:
+- `npm run build` must succeed.
+- The app should run without runtime errors.
+- On mobile:
+  - The sidebar should behave like a proper responsive menu (not permanently covering the content).
+- On login:
+  - Successful login must redirect the user to the dashboard/main page.
+- On "Kullanıcı Ekle":
+  - No 404,
+  - The user creation form should work end-to-end.
+
+At the end, summarize:
+- Which files you changed,
+- How you fixed the mobile sidebar,
+- How you fixed the login redirect,
+- How you fixed the “Kullanıcı Ekle” route and form.

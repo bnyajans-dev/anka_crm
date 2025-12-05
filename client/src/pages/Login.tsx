@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,9 +20,19 @@ const loginSchema = z.object({
 
 export default function Login() {
   const { t } = useTranslation();
-  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, user } = useAuth();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+
+  const from = (location.state as any)?.from?.pathname || '/dashboard';
+
+  useEffect(() => {
+    if (user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, from]);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -39,6 +50,7 @@ export default function Login() {
         title: t('common.success'),
         description: t('common.welcome'),
       });
+      navigate(from, { replace: true });
     } catch (err) {
       console.error(err);
       setError(t('auth.invalid_credentials'));
@@ -82,7 +94,11 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>{t('auth.email')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="admin@ankatravel.com" {...field} />
+                        <Input 
+                          placeholder="admin@ankatravel.com" 
+                          {...field} 
+                          data-testid="input-email"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -96,7 +112,11 @@ export default function Login() {
                     <FormItem>
                       <FormLabel>{t('auth.password')}</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input 
+                          type="password" 
+                          {...field} 
+                          data-testid="input-password"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -104,7 +124,7 @@ export default function Login() {
                 />
 
                 {error && (
-                  <div className="text-sm text-destructive font-medium">
+                  <div className="text-sm text-destructive font-medium" data-testid="text-error">
                     {error}
                   </div>
                 )}
@@ -113,6 +133,7 @@ export default function Login() {
                   type="submit" 
                   className="w-full" 
                   disabled={form.formState.isSubmitting}
+                  data-testid="button-login"
                 >
                   {form.formState.isSubmitting ? (
                     <>

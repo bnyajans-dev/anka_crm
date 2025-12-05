@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { 
   Globe,
-  User,
-  Bell
+  Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -14,8 +13,13 @@ import {
 import { useAuth } from '@/lib/auth';
 import NotificationsPopover from '../NotificationsPopover';
 import { Badge } from '@/components/ui/badge';
+import logo from '@assets/generated_images/minimalist_phoenix_logo_for_anka_travel.png';
 
-export function Header() {
+interface HeaderProps {
+  onMobileMenuToggle?: () => void;
+}
+
+export function Header({ onMobileMenuToggle }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
 
@@ -44,14 +48,32 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-background border-b border-border px-6 flex items-center justify-between sticky top-0 z-10">
-      <div className="flex items-center gap-4">
+    <header className="h-16 bg-background border-b border-border px-4 md:px-6 flex items-center justify-between sticky top-0 z-10">
+      <div className="flex items-center gap-3">
+        {/* Mobile Menu Button */}
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="md:hidden h-9 w-9"
+          onClick={onMobileMenuToggle}
+          data-testid="button-mobile-menu"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        
+        {/* Mobile Logo */}
+        <div className="flex items-center gap-2 md:hidden">
+          <img src={logo} alt="Anka Travel" className="h-7 w-7 rounded-md object-cover" />
+          <span className="font-semibold text-base">Anka Travel</span>
+        </div>
+
+        {/* Desktop Title */}
         <h1 className="text-xl font-semibold tracking-tight hidden md:block">
           {t('common.dashboard')}
         </h1>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         {/* Language Switcher */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -72,7 +94,7 @@ export function Header() {
         {/* Notifications */}
         <NotificationsPopover />
 
-        <div className="w-px h-6 bg-border mx-1" />
+        <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
 
         {/* User Profile */}
         <DropdownMenu>
@@ -81,7 +103,7 @@ export function Header() {
               <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
                 {user?.name?.charAt(0) || 'U'}
               </div>
-              <div className="flex flex-col items-start hidden sm:flex">
+              <div className="flex-col items-start hidden sm:flex">
                 <span className="text-sm font-medium leading-none">{user?.name}</span>
                 {user?.role && (
                     <Badge variant="outline" className={`text-[10px] px-1 py-0 mt-1 border-0 ${getRoleColor(user.role)}`}>

@@ -4,7 +4,6 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   School, 
-  PlusCircle, 
   LogOut, 
   ChevronLeft,
   ChevronRight,
@@ -25,15 +24,20 @@ import {
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/auth';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import logo from '@assets/generated_images/minimalist_phoenix_logo_for_anka_travel.png';
 
-export function Sidebar() {
-  const { t } = useTranslation();
-  const { pathname } = useLocation();
-  const { logout, user } = useAuth();
-  const [collapsed, setCollapsed] = useState(false);
+interface NavItem {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  href: string;
+  roles: string[];
+}
 
-  const navItems = [
+function useNavItems() {
+  const { t } = useTranslation();
+  
+  const navItems: NavItem[] = [
     {
       title: t('nav.dashboard'),
       icon: LayoutDashboard,
@@ -168,27 +172,24 @@ export function Sidebar() {
     }
   ];
 
-  return (
-    <aside 
-      className={cn(
-        "h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out",
-        collapsed ? "w-20" : "w-64"
-      )}
-    >
-      {/* Logo Area */}
-      <div className="h-16 flex items-center px-4 border-b border-sidebar-border/50">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <img src={logo} alt="Anka Travel" className="h-8 w-8 rounded-md object-cover" />
-          {!collapsed && (
-            <span className="font-bold text-lg tracking-tight text-sidebar-foreground truncate">
-              Anka Travel
-            </span>
-          )}
-        </div>
-      </div>
+  return navItems;
+}
 
+interface SidebarContentProps {
+  collapsed?: boolean;
+  onItemClick?: () => void;
+}
+
+function SidebarContent({ collapsed = false, onItemClick }: SidebarContentProps) {
+  const { t } = useTranslation();
+  const { pathname } = useLocation();
+  const { logout, user } = useAuth();
+  const navItems = useNavItems();
+
+  return (
+    <>
       {/* Navigation */}
-      <nav className="flex-1 py-6 px-3 space-y-1">
+      <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
         {navItems
           .filter(item => user && item.roles.includes(user.role))
           .map((item) => {
@@ -197,6 +198,7 @@ export function Sidebar() {
             <Link 
               key={item.href} 
               to={item.href}
+              onClick={onItemClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-md transition-colors group relative",
                 isActive 
@@ -232,21 +234,79 @@ export function Sidebar() {
           variant="ghost" 
           size="sm" 
           className="w-full flex justify-start gap-3 text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10"
-          onClick={logout}
+          onClick={() => {
+            logout();
+            onItemClick?.();
+          }}
         >
           <LogOut className="h-5 w-5 shrink-0" />
           {!collapsed && <span>{t('common.logout')}</span>}
         </Button>
-        
+      </div>
+    </>
+  );
+}
+
+export function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <aside 
+      className={cn(
+        "h-screen bg-sidebar border-r border-sidebar-border flex flex-col transition-all duration-300 ease-in-out",
+        collapsed ? "w-20" : "w-64"
+      )}
+    >
+      {/* Logo Area */}
+      <div className="h-16 flex items-center px-4 border-b border-sidebar-border/50">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <img src={logo} alt="Anka Travel" className="h-8 w-8 rounded-md object-cover" />
+          {!collapsed && (
+            <span className="font-bold text-lg tracking-tight text-sidebar-foreground truncate">
+              Anka Travel
+            </span>
+          )}
+        </div>
+      </div>
+
+      <SidebarContent collapsed={collapsed} />
+      
+      {/* Collapse Toggle */}
+      <div className="p-3">
         <Button
           variant="ghost"
           size="icon"
-          className="w-full h-8 mt-2 text-sidebar-foreground/50 hover:text-sidebar-foreground"
+          className="w-full h-8 text-sidebar-foreground/50 hover:text-sidebar-foreground"
           onClick={() => setCollapsed(!collapsed)}
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
     </aside>
+  );
+}
+
+interface MobileSidebarProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="left" className="w-72 p-0 bg-sidebar">
+        <SheetHeader className="h-16 flex items-center px-4 border-b border-sidebar-border/50">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="Anka Travel" className="h-8 w-8 rounded-md object-cover" />
+            <SheetTitle className="font-bold text-lg tracking-tight text-sidebar-foreground">
+              Anka Travel
+            </SheetTitle>
+          </div>
+        </SheetHeader>
+        <div className="flex flex-col h-[calc(100%-4rem)]">
+          <SidebarContent onItemClick={() => onOpenChange(false)} />
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

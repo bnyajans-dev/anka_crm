@@ -131,7 +131,11 @@ export default function UsersList() {
                           <Button variant="ghost" className="h-8 w-8 p-0"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem><Pencil className="mr-2 h-4 w-4" /> {t('common.edit')}</DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={`/users/${user.id}/edit`}>
+                              <Pencil className="mr-2 h-4 w-4" /> {t('common.edit')}
+                            </Link>
+                          </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
                             <Trash2 className="mr-2 h-4 w-4" /> {t('common.delete')}
                           </DropdownMenuItem>

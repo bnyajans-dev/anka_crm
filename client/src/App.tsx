@@ -158,6 +158,22 @@ function Router() {
         </ProtectedRoute>
       } />
       
+      <Route path="/users/new" element={
+        <ProtectedRoute>
+          <RequireRole roles={['admin']}>
+            <UserFormPage />
+          </RequireRole>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/users/:id/edit" element={
+        <ProtectedRoute>
+          <RequireRole roles={['admin']}>
+            <UserFormPage />
+          </RequireRole>
+        </ProtectedRoute>
+      } />
+      
       <Route path="/teams" element={
         <ProtectedRoute>
           <RequireRole roles={['admin']}>
