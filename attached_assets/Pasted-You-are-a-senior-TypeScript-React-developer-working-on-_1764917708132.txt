@@ -1,0 +1,55 @@
+You are a senior TypeScript + React developer working on a CRM project for a Turkish travel agency (Anka Travel school tours CRM). The project is built with React + TypeScript + Vite, shadcn/ui, React Hook Form, Zod, TanStack Query, i18next, and react-i18next. 
+
+Goal:
+Make the ENTIRE frontend UI fully Turkish (TR) with proper i18n support. Currently some labels, placeholders, validation messages and button texts are still in English. I want all visible UI text to be Turkish, and managed through i18next translation files instead of hard-coded strings in components.
+
+Requirements:
+1. Default language must be Turkish:
+   - Configure i18next so that `lng: "tr"` and `fallbackLng: "tr"`.
+   - Supported languages: ["tr", "en"], but UI should open in Turkish by default.
+   - It is OK if you disable browser language detection or keep it minimal.
+
+2. Translation structure:
+   - Use a `tr` translation file (for example `src/lib/locales/tr/common.json` or existing structure).
+   - Define clear namespaces/sections such as:
+     - `app`, `nav`, `common`, `forms`, `validation`, `schools`, `visits`, `offers`, `sales`, `leaves`, `users`, `teams`, `reports`, etc.
+   - All button texts, form labels, placeholders, table headers, pagination labels, empty state messages, modals, dialogs should come from `t("...")`.
+
+3. Replace all hard-coded English strings:
+   - Search globally for common English UI words: "Create", "New", "Edit", "Save", "Cancel", "Search", "Filter", "Status", "Details", "Settings", "Dashboard", "Enter", "Select", "This field is required", etc.
+   - For each one:
+     - Create an appropriate key in the TR translation file.
+     - Replace the hard-coded string with `t("...")`.
+   - Example:
+     - `Button>Create Offer</Button>` → `<Button>{t("offers.newOffer")}</Button>`
+     - `<Input placeholder="Search school..." />` → `<Input placeholder={t("schools.searchPlaceholder")} />`
+     - `<FormMessage>This field is required</FormMessage>` → `<FormMessage>{t("validation.required")}</FormMessage>`
+
+4. Validation messages (Zod + React Hook Form):
+   - All Zod error messages must be in Turkish.
+   - Example:
+     - `.email("Invalid e-mail")` → `.email("Geçerli bir e-posta adresi girin.")`
+     - `.nonempty("E-mail is required")` → `.nonempty("E-posta zorunludur.")`
+   - Prefer using `t("validation.*")` keys where possible.
+
+5. Date, calendar and formatting:
+   - Use Turkish locale for all date formatting and date pickers.
+   - Import `tr` from `date-fns/locale` and pass it to any `format` and `DayPicker` usage.
+   - Ensure month/day names and UI in calendars are in Turkish.
+
+6. Navigation & layout:
+   - Side navigation, top bar, breadcrumbs, page titles, dashboard widgets, statistics cards: all must use `t("...")` and Turkish texts.
+   - Examples: "Dashboard" → "Kontrol Paneli", "Offers" → "Teklifler", "Schools" → "Okullar", "Reports" → "Raporlar", etc.
+
+7. Keep code clean:
+   - Do NOT duplicate translation keys.
+   - Group keys meaningfully.
+   - Do not change business logic; only i18n and UI text.
+   - After changes, the app should still build and run without TypeScript errors.
+
+Please:
+- Inspect the existing i18n setup in this repo.
+- Create or update the Turkish translation file(s).
+- Replace all remaining English hard-coded UI texts with proper Turkish translations using `t("...")`.
+- Adjust any date/time components to use Turkish locale.
+- Show me the key files and the final i18n setup.

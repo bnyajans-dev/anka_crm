@@ -35,56 +35,55 @@ export function Sidebar() {
 
   const navItems = [
     {
-      title: t('common.dashboard'),
+      title: t('nav.dashboard'),
       icon: LayoutDashboard,
       href: '/dashboard',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.schools'),
+      title: t('nav.schools'),
       icon: School,
       href: '/schools',
-      roles: ['admin', 'manager'] // Hidden for sales in menu, but accessible read-only
+      roles: ['admin', 'manager']
     },
     {
-      title: t('common.visits'),
+      title: t('nav.visits'),
       icon: Briefcase,
       href: '/visits',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.offers'),
+      title: t('nav.offers'),
       icon: FileText,
       href: '/offers',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.sales'),
+      title: t('nav.sales'),
       icon: CreditCard,
       href: '/sales',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.leave_requests'),
+      title: t('nav.leave_requests'),
       icon: Calendar,
       href: '/leave-requests',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.announcements'),
+      title: t('nav.announcements'),
       icon: Megaphone,
       href: '/announcements',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.appointments'),
+      title: t('nav.appointments'),
       icon: Clock,
       href: '/appointments',
       roles: ['admin', 'manager', 'sales']
     },
-    // Target & Performance Section
     {
-      title: 'Hedef Yönetimi',
+      title: t('nav.target_management'),
       icon: LineChart,
       href: '/performance/targets',
       roles: ['admin', 'manager']
@@ -96,79 +95,76 @@ export function Sidebar() {
       roles: ['sales']
     },
     {
-      title: 'Performans Özeti',
+      title: t('nav.performance_summary'),
       icon: Users,
       href: '/performance/users',
       roles: ['admin', 'manager']
     },
     {
-      title: t('performance.commissions'),
+      title: t('nav.commissions'),
       icon: CreditCard,
       href: '/commissions',
       roles: ['sales', 'manager', 'admin']
     },
     {
-      title: t('audit.title'),
+      title: t('nav.audit_logs'),
       icon: FileSearch,
       href: '/audit-logs',
       roles: ['admin']
     },
-    // Admin Settings
     {
-      title: 'Tur Tanımları',
+      title: t('nav.tour_definitions'),
       icon: Map,
       href: '/settings/tours',
       roles: ['admin', 'system_admin']
     },
     {
-      title: 'Teklif Şablonu',
+      title: t('nav.offer_template'),
       icon: FileText,
       href: '/settings/offer-template',
       roles: ['admin']
     },
     {
-      title: 'Mobile Preview',
+      title: t('nav.mobile_preview'),
       icon: Smartphone,
       href: '/m',
       roles: ['admin', 'manager', 'sales']
     },
     {
-      title: t('common.users'),
+      title: t('nav.users'),
       icon: Users,
       href: '/users',
       roles: ['admin']
     },
     {
-      title: t('common.teams'),
+      title: t('nav.teams'),
       icon: Shield,
       href: '/teams',
       roles: ['admin']
     },
-    // System Admin Section
     {
-        title: 'Kullanıcı Yönetimi',
-        icon: Users,
-        href: '/system/users',
-        roles: ['system_admin']
+      title: t('nav.user_management'),
+      icon: Users,
+      href: '/system/users',
+      roles: ['system_admin']
     },
     {
-        title: 'Takım Yönetimi',
-        icon: Shield,
-        href: '/system/teams',
-        roles: ['system_admin']
+      title: t('nav.team_management'),
+      icon: Shield,
+      href: '/system/teams',
+      roles: ['system_admin']
     },
     {
-        title: 'Sistem Ayarları',
-        icon: Settings,
-        href: '/system/settings',
-        roles: ['system_admin']
+      title: t('nav.system_settings'),
+      icon: Settings,
+      href: '/system/settings',
+      roles: ['system_admin']
     },
-    // Reports
     {
-        title: 'Bölge Haritası',
-        icon: Map,
-        href: '/reports/map',
-        roles: ['system_admin', 'admin', 'manager']
+      title: t('nav.region_map'),
+      icon: Map,
+      href: '/reports/map',
+      roles: ['system_admin', 'admin', 'manager']
     }
   ];
 
