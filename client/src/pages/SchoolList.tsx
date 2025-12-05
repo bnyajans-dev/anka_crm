@@ -68,7 +68,7 @@ export default function SchoolList() {
     } catch (error) {
       toast({
         title: t('common.error'),
-        description: "Failed to delete school",
+        description: t('errors.generic'),
         variant: "destructive"
       });
     } finally {
@@ -87,7 +87,7 @@ export default function SchoolList() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{t('schools.title')}</h1>
-          <p className="text-muted-foreground mt-1">Manage all registered schools</p>
+          <p className="text-muted-foreground mt-1">{t('schools.form_subtitle')}</p>
         </div>
         <Button asChild className="shadow-md hover:shadow-lg transition-all">
           <Link to="/schools/new">
@@ -128,14 +128,14 @@ export default function SchoolList() {
                     <TableCell colSpan={6} className="h-24 text-center">
                       <div className="flex justify-center items-center gap-2 text-muted-foreground">
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        {t('schools.loading')}
+                        {t('common.loading')}
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : filteredSchools.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                      No schools found.
+                      {t('schools.no_schools')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -150,7 +150,7 @@ export default function SchoolList() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
+                              <span className="sr-only">{t('common.actions')}</span>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

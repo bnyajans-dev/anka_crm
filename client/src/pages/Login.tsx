@@ -13,8 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import logo from '@assets/generated_images/minimalist_phoenix_logo_for_anka_travel.png';
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1, "Password is required"),
+  email: z.string().email("Geçerli bir e-posta adresi girin"),
+  password: z.string().min(1, "Şifre zorunludur"),
 });
 
 export default function Login() {
@@ -36,16 +36,16 @@ export default function Login() {
       setError(null);
       await login(values.email, values.password);
       toast({
-        title: "Success",
-        description: "Logged in successfully",
+        title: t('common.success'),
+        description: t('common.welcome'),
       });
     } catch (err) {
       console.error(err);
-      setError('Invalid email or password');
+      setError(t('auth.invalid_credentials'));
       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
+        title: t('common.error'),
+        description: t('auth.invalid_credentials'),
       });
     }
   };

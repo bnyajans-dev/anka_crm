@@ -98,7 +98,9 @@
     "amount": "Amount",
     "price": "Price",
     "quantity": "Quantity",
-    "per_person": "Per Person"
+    "per_person": "Per Person",
+    "manual": "Manual",
+    "source": "Source"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -306,7 +308,8 @@
     "payment_status": "Payment Status",
     "payment_paid": "Paid",
     "payment_partial": "Partial Payment",
-    "payment_pending": "Payment Pending",
+    "payment_pending": "Pending",
+    "payment_cancelled": "Cancelled",
     "payment_overdue": "Overdue",
     "payment_amount": "Payment Amount",
     "payment_date": "Payment Date",

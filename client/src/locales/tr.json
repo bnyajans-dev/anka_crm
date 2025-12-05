@@ -98,7 +98,9 @@
     "amount": "Tutar",
     "price": "Fiyat",
     "quantity": "Adet",
-    "per_person": "Kişi Başı"
+    "per_person": "Kişi Başı",
+    "manual": "Manuel",
+    "source": "Kaynak"
   },
   "nav": {
     "dashboard": "Kontrol Paneli",
@@ -306,7 +308,8 @@
     "payment_status": "Ödeme Durumu",
     "payment_paid": "Ödendi",
     "payment_partial": "Kısmi Ödeme",
-    "payment_pending": "Ödeme Bekliyor",
+    "payment_pending": "Beklemede",
+    "payment_cancelled": "İptal",
     "payment_overdue": "Gecikmiş",
     "payment_amount": "Ödeme Tutarı",
     "payment_date": "Ödeme Tarihi",

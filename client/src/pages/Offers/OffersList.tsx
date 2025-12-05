@@ -52,12 +52,12 @@ export default function OffersList() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{t('offers.title')}</h1>
           <p className="text-muted-foreground">
-            Manage your proposals and offers
+            {t('offers.form_subtitle')}
           </p>
         </div>
         <Button asChild className="bg-primary hover:bg-primary/90">
           <Link to="/offers/new">
-            <Plus className="mr-2 h-4 w-4" /> {t('offers.new')}
+            <Plus className="mr-2 h-4 w-4" /> {t('offers.new_offer')}
           </Link>
         </Button>
       </div>
@@ -85,7 +85,7 @@ export default function OffersList() {
                     <TableCell>{offer.total_price} {offer.currency}</TableCell>
                     <TableCell>
                       <Badge variant={offer.status === 'accepted' ? 'default' : 'secondary'} className={offer.status === 'accepted' ? 'bg-green-500' : ''}>
-                        {offer.status}
+                        {t(`offers.status_${offer.status}`)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">

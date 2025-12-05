@@ -62,12 +62,12 @@ export default function SalesList() {
              <Select value={sourceFilter} onValueChange={setSourceFilter}>
                 <SelectTrigger className="w-[180px]">
                     <Filter className="mr-2 h-4 w-4" />
-                    <SelectValue placeholder="Filter Source" />
+                    <SelectValue placeholder={t('common.filter')} />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">All Sources</SelectItem>
-                    <SelectItem value="offer">From Offers</SelectItem>
-                    <SelectItem value="manual">Manual</SelectItem>
+                    <SelectItem value="all">{t('common.all')}</SelectItem>
+                    <SelectItem value="offer">{t('offers.title')}</SelectItem>
+                    <SelectItem value="manual">{t('common.manual')}</SelectItem>
                 </SelectContent>
              </Select>
         </div>
@@ -83,15 +83,15 @@ export default function SalesList() {
                 <TableHead>{t('common.date')}</TableHead>
                 <TableHead>{t('sales.revenue')}</TableHead>
                 <TableHead>{t('sales.payment_status')}</TableHead>
-                <TableHead>Kaynak</TableHead>
-                <TableHead className="text-right">İşlemler</TableHead>
+                <TableHead>{t('common.source')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow><TableCell colSpan={7} className="text-center h-24"><Loader2 className="animate-spin mx-auto" /></TableCell></TableRow>
               ) : filteredSales.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">Satış kaydı bulunamadı.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">{t('sales.no_sales')}</TableCell></TableRow>
               ) : (
                 filteredSales.map((sale) => (
                   <TableRow 
@@ -109,16 +109,14 @@ export default function SalesList() {
                         variant={sale.payment_status === 'paid' ? 'default' : sale.payment_status === 'cancelled' ? 'destructive' : 'secondary'}
                         data-testid={`status-payment-${sale.id}`}
                       >
-                        {sale.payment_status === 'paid' ? 'Ödendi' : 
-                         sale.payment_status === 'cancelled' ? 'İptal' : 
-                         sale.payment_status === 'partial' ? 'Kısmi' : 'Beklemede'}
+                        {t(`sales.payment_${sale.payment_status}`)}
                       </Badge>
                     </TableCell>
                     <TableCell>
                         {sale.created_from_offer ? (
-                            <Badge variant="secondary" className="text-[10px]">Teklif</Badge>
+                            <Badge variant="secondary" className="text-[10px]">{t('offers.title')}</Badge>
                         ) : (
-                            <Badge variant="outline" className="text-[10px]">Manuel</Badge>
+                            <Badge variant="outline" className="text-[10px]">{t('common.manual')}</Badge>
                         )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -135,7 +133,7 @@ export default function SalesList() {
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Detayları Gör</TooltipContent>
+                            <TooltipContent>{t('common.details')}</TooltipContent>
                           </Tooltip>
                           {canManageExpenses && (
                             <Tooltip>
@@ -149,7 +147,7 @@ export default function SalesList() {
                                   <Receipt className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>Giderleri Yönet</TooltipContent>
+                              <TooltipContent>{t('expenses.title')}</TooltipContent>
                             </Tooltip>
                           )}
                         </div>

@@ -168,16 +168,21 @@ export default function Dashboard() {
     });
 
     return [
-      { name: 'Taslak', value: statusCount.draft, color: '#94a3b8' },
-      { name: 'Gönderildi', value: statusCount.sent, color: '#3b82f6' },
-      { name: 'Müzakere', value: statusCount.negotiation, color: '#f59e0b' },
-      { name: 'Kabul', value: statusCount.accepted, color: '#22c55e' },
-      { name: 'Red', value: statusCount.rejected, color: '#ef4444' },
+      { name: t('offers.status_draft'), value: statusCount.draft, color: '#94a3b8' },
+      { name: t('offers.status_sent'), value: statusCount.sent, color: '#3b82f6' },
+      { name: t('offers.status_negotiation'), value: statusCount.negotiation, color: '#f59e0b' },
+      { name: t('offers.status_accepted'), value: statusCount.accepted, color: '#22c55e' },
+      { name: t('offers.status_rejected'), value: statusCount.rejected, color: '#ef4444' },
     ].filter(d => d.value > 0);
-  }, [filteredData]);
+  }, [filteredData, t]);
 
   const monthlyRevenueData = useMemo(() => {
-    const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+    const months = [
+      t('calendar.months_short.jan'), t('calendar.months_short.feb'), t('calendar.months_short.mar'),
+      t('calendar.months_short.apr'), t('calendar.months_short.may'), t('calendar.months_short.jun'),
+      t('calendar.months_short.jul'), t('calendar.months_short.aug'), t('calendar.months_short.sep'),
+      t('calendar.months_short.oct'), t('calendar.months_short.nov'), t('calendar.months_short.dec')
+    ];
     const revenueByMonth = new Array(12).fill(0);
     
     sales.forEach(s => {
@@ -186,7 +191,7 @@ export default function Dashboard() {
     });
 
     return months.map((name, i) => ({ name, ciro: revenueByMonth[i] }));
-  }, [sales]);
+  }, [sales, t]);
 
   const salesRankingData = useMemo(() => {
     if (!isManager) return [];
@@ -224,10 +229,10 @@ export default function Dashboard() {
   }
 
   const timeFilterLabels: Record<TimeFilter, string> = {
-    this_month: 'Bu Ay',
-    last_month: 'Geçen Ay',
-    this_year: 'Bu Yıl',
-    all: 'Tümü'
+    this_month: t('common.this_month'),
+    last_month: t('common.last_month'),
+    this_year: t('common.this_year'),
+    all: t('common.all')
   };
 
   return (
@@ -235,7 +240,7 @@ export default function Dashboard() {
       {/* Header with Filters */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-3xl font-bold tracking-tight">
-          {isManager ? 'Yönetici Paneli' : 'Performansım'}
+          {isManager ? t('dashboard.manager_panel') : t('dashboard.my_performance')}
         </h1>
         
         <div className="flex items-center gap-3">
@@ -244,10 +249,10 @@ export default function Dashboard() {
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
               <SelectTrigger className="w-[180px]" data-testid="select-user-filter">
                 <Users className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Satışçı Seç" />
+                <SelectValue placeholder={t('dashboard.select_user')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Tüm Satışçılar</SelectItem>
+                <SelectItem value="all">{t('dashboard.all_users')}</SelectItem>
                 {users.map(u => (
                   <SelectItem key={u.id} value={u.id.toString()}>{u.name}</SelectItem>
                 ))}
@@ -262,10 +267,10 @@ export default function Dashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="this_month">Bu Ay</SelectItem>
-              <SelectItem value="last_month">Geçen Ay</SelectItem>
-              <SelectItem value="this_year">Bu Yıl</SelectItem>
-              <SelectItem value="all">Tümü</SelectItem>
+              <SelectItem value="this_month">{t('common.this_month')}</SelectItem>
+              <SelectItem value="last_month">{t('common.last_month')}</SelectItem>
+              <SelectItem value="this_year">{t('common.this_year')}</SelectItem>
+              <SelectItem value="all">{t('common.all')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -275,7 +280,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Card data-testid="card-visits">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ziyaret Edilen Okul</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.visited_schools')}</CardTitle>
             <Briefcase className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -286,7 +291,7 @@ export default function Dashboard() {
 
         <Card data-testid="card-offers">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Oluşturulan Teklif</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.created_offers')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
@@ -297,7 +302,7 @@ export default function Dashboard() {
 
         <Card data-testid="card-sales">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gerçekleşen Satış</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.completed_sales')}</CardTitle>
             <CreditCard className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -308,7 +313,7 @@ export default function Dashboard() {
 
         <Card data-testid="card-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Toplam Ciro</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.total_revenue')}</CardTitle>
             <CreditCard className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -321,7 +326,7 @@ export default function Dashboard() {
 
         <Card data-testid="card-conversion">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Dönüşüm Oranı</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('dashboard.conversion_rate')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -329,7 +334,7 @@ export default function Dashboard() {
               %{metrics.conversionRate}
             </div>
             <p className="text-xs text-muted-foreground">
-              {metrics.acceptedOffers} / {metrics.offerCount} teklif
+              {metrics.acceptedOffers} / {metrics.offerCount} {t('dashboard.offer').toLowerCase()}
             </p>
           </CardContent>
         </Card>
@@ -340,7 +345,7 @@ export default function Dashboard() {
         {/* Daily Visits Line Chart */}
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle className="text-base">Günlük Ziyaretler</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.daily_visits')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -351,7 +356,7 @@ export default function Dashboard() {
                   <YAxis allowDecimals={false} fontSize={12} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                    labelFormatter={(value) => `Gün ${value}`}
+                    labelFormatter={(value) => `${t('dashboard.day')} ${value}`}
                   />
                   <Line 
                     type="monotone" 
@@ -359,7 +364,7 @@ export default function Dashboard() {
                     stroke="hsl(var(--primary))" 
                     strokeWidth={2}
                     dot={{ fill: 'hsl(var(--primary))' }}
-                    name="Ziyaret"
+                    name={t('dashboard.visit')}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -370,7 +375,7 @@ export default function Dashboard() {
         {/* Offer Status Pie Chart */}
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle className="text-base">Teklif Durum Dağılımı</CardTitle>
+            <CardTitle className="text-base">{t('dashboard.offer_status_distribution')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -403,7 +408,7 @@ export default function Dashboard() {
       {/* Monthly Revenue Bar Chart */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Aylık Ciro (Yıl İçi)</CardTitle>
+          <CardTitle className="text-base">{t('dashboard.monthly_revenue')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-[300px]">
@@ -417,13 +422,13 @@ export default function Dashboard() {
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                  formatter={(value: number) => [`${value.toLocaleString('tr-TR')} ₺`, 'Ciro']}
+                  formatter={(value: number) => [`${value.toLocaleString('tr-TR')} ₺`, t('dashboard.revenue')]}
                 />
                 <Bar 
                   dataKey="ciro" 
                   fill="hsl(var(--primary))" 
                   radius={[4, 4, 0, 0]}
-                  name="Ciro"
+                  name={t('dashboard.revenue')}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -437,19 +442,19 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
-              Satışçı Sıralaması
+              {t('dashboard.sales_ranking')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Satışçı</TableHead>
-                  <TableHead className="text-center">Ziyaret</TableHead>
-                  <TableHead className="text-center">Teklif</TableHead>
-                  <TableHead className="text-center">Kabul Edilen</TableHead>
-                  <TableHead className="text-right">Ciro</TableHead>
-                  <TableHead className="w-[180px]">Hedef Gerçekleşme</TableHead>
+                  <TableHead>{t('dashboard.salesperson')}</TableHead>
+                  <TableHead className="text-center">{t('dashboard.visit')}</TableHead>
+                  <TableHead className="text-center">{t('dashboard.offer')}</TableHead>
+                  <TableHead className="text-center">{t('dashboard.accepted')}</TableHead>
+                  <TableHead className="text-right">{t('dashboard.revenue')}</TableHead>
+                  <TableHead className="w-[180px]">{t('dashboard.target_achievement')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
