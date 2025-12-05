@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +24,7 @@ const tourSchema = z.object({
 });
 
 export default function TourForm() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
@@ -64,14 +66,14 @@ export default function TourForm() {
     try {
       if (id) {
         await api.tours.update(parseInt(id), values);
-        toast({ title: "Tur güncellendi" });
+        toast({ title: t('tours.success_update') });
       } else {
         await api.tours.create(values);
-        toast({ title: "Tur oluşturuldu" });
+        toast({ title: t('tours.success_add') });
       }
       navigate('/settings/tours');
     } catch (error) {
-      toast({ title: "Hata oluştu", variant: "destructive" });
+      toast({ title: t('common.error'), variant: "destructive" });
     }
   };
 
@@ -81,29 +83,29 @@ export default function TourForm() {
     <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
       <div className="flex items-center gap-4">
         <Button variant="outline" size="icon" asChild><Link to="/settings/tours"><ChevronLeft className="h-4 w-4" /></Link></Button>
-        <h1 className="text-3xl font-bold tracking-tight">{id ? 'Tur Düzenle' : 'Yeni Tur Tanımı'}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{id ? t('tours.edit_tour') : t('tours.new_tour')}</h1>
       </div>
       
       <Card>
-        <CardHeader><CardTitle>Tur Detayları</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('tours.form_title')}</CardTitle></CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Tur Adı</FormLabel><FormControl><Input {...field} placeholder="Örn: Ankara-Çanakkale Turu" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('tours.tour_name')}</FormLabel><FormControl><Input {...field} placeholder={t('tours.tour_name_placeholder')} /></FormControl><FormMessage /></FormItem>
               )} />
               
               <FormField control={form.control} name="description" render={({ field }) => (
-                <FormItem><FormLabel>Açıklama</FormLabel><FormControl><Textarea {...field} placeholder="Tur içeriği hakkında kısa bilgi..." /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('common.description')}</FormLabel><FormControl><Textarea {...field} placeholder={t('tours.description_placeholder')} /></FormControl><FormMessage /></FormItem>
               )} />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="default_price_per_student" render={({ field }) => (
-                  <FormItem><FormLabel>Varsayılan Fiyat (Kişi Başı)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t('tours.default_price')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                  <FormField control={form.control} name="default_currency" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Para Birimi</FormLabel>
+                    <FormLabel>{t('common.currency')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
@@ -119,14 +121,14 @@ export default function TourForm() {
 
               <div className="grid grid-cols-2 gap-4">
                  <FormField control={form.control} name="default_duration_days" render={({ field }) => (
-                  <FormItem><FormLabel>Süre (Gün)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>{t('tours.duration_days')}</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
 
                 <FormField control={form.control} name="region" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bölge</FormLabel>
+                    <FormLabel>{t('common.region')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Bölge Seçiniz" /></SelectTrigger></FormControl>
+                      <FormControl><SelectTrigger><SelectValue placeholder={t('schools.select_region')} /></SelectTrigger></FormControl>
                       <SelectContent>
                         <SelectItem value="Marmara">Marmara</SelectItem>
                         <SelectItem value="Ege">Ege</SelectItem>
@@ -144,7 +146,7 @@ export default function TourForm() {
 
               <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
                 {form.formState.isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                Kaydet
+                {t('common.save')}
               </Button>
             </form>
           </Form>

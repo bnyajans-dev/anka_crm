@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +24,7 @@ const userSchema = z.object({
 });
 
 export default function UserFormPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { id } = useParams();
   const { toast } = useToast();
@@ -95,14 +97,14 @@ export default function UserFormPage() {
 
       if (id) {
         await api.users.update(parseInt(id), data);
-        toast({ title: "Kullanıcı güncellendi" });
+        toast({ title: t('users.success_update') });
       } else {
         await api.users.create(data);
-        toast({ title: "Kullanıcı oluşturuldu" });
+        toast({ title: t('users.success_add') });
       }
       navigate('/system/users');
     } catch (error) {
-      toast({ title: "Hata oluştu", variant: "destructive" });
+      toast({ title: t('common.error'), variant: "destructive" });
     }
   };
 
@@ -110,32 +112,32 @@ export default function UserFormPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in">
-      <h1 className="text-3xl font-bold tracking-tight">{id ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'}</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{id ? t('users.edit_user') : t('users.new_user')}</h1>
       
       <Card>
-        <CardHeader><CardTitle>Kullanıcı Bilgileri</CardTitle></CardHeader>
+        <CardHeader><CardTitle>{t('users.form_title')}</CardTitle></CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Ad Soyad</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('users.full_name')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               
               <FormField control={form.control} name="email" render={({ field }) => (
-                <FormItem><FormLabel>E-posta</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>{t('common.email')}</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem>
               )} />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField control={form.control} name="role" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rol</FormLabel>
+                    <FormLabel>{t('common.role')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
                       <SelectContent>
-                        <SelectItem value="sales">Satış</SelectItem>
-                        <SelectItem value="manager">Ekip Lideri</SelectItem>
-                        <SelectItem value="admin">Yönetici</SelectItem>
-                        <SelectItem value="system_admin">Sistem Yöneticisi</SelectItem>
+                        <SelectItem value="sales">{t('users.role_sales')}</SelectItem>
+                        <SelectItem value="manager">{t('users.role_manager')}</SelectItem>
+                        <SelectItem value="admin">{t('users.role_admin')}</SelectItem>
+                        <SelectItem value="system_admin">{t('users.role_system_admin')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -144,11 +146,11 @@ export default function UserFormPage() {
 
                 <FormField control={form.control} name="team_id" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Takım (Opsiyonel)</FormLabel>
+                    <FormLabel>{t('common.team')} ({t('common.optional')})</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl><SelectTrigger><SelectValue placeholder="Takım Seçiniz" /></SelectTrigger></FormControl>
+                      <FormControl><SelectTrigger><SelectValue placeholder={t('users.select_team')} /></SelectTrigger></FormControl>
                       <SelectContent>
-                        {teams.map(t => <SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>)}
+                        {teams.map(tm => <SelectItem key={tm.id} value={tm.id.toString()}>{tm.name}</SelectItem>)}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -158,15 +160,15 @@ export default function UserFormPage() {
 
               <FormField control={form.control} name="region" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bölge (Opsiyonel)</FormLabel>
-                  <FormControl><Input {...field} placeholder="Örn: Marmara" /></FormControl>
-                  <FormDescription>Satış personelinin sorumlu olduğu ana bölge.</FormDescription>
+                  <FormLabel>{t('common.region')} ({t('common.optional')})</FormLabel>
+                  <FormControl><Input {...field} placeholder={t('users.region_placeholder')} /></FormControl>
+                  <FormDescription>{t('users.region_description')}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )} />
 
               <FormItem>
-                  <FormLabel>Sorumlu Olduğu İlçeler (Harita Raporu İçin)</FormLabel>
+                  <FormLabel>{t('users.assigned_districts')}</FormLabel>
                   <div className="grid grid-cols-3 gap-2 border p-4 rounded-md max-h-[200px] overflow-y-auto">
                       {allDistricts.map(district => (
                           <div key={district} className="flex items-center space-x-2">
@@ -181,22 +183,22 @@ export default function UserFormPage() {
                           </div>
                       ))}
                   </div>
-                  <FormDescription>Birden fazla seçim yapabilirsiniz.</FormDescription>
+                  <FormDescription>{t('users.districts_description')}</FormDescription>
               </FormItem>
 
               <FormField control={form.control} name="is_active" render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
                   <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Aktif Kullanıcı</FormLabel>
-                    <FormDescription>Bu kullanıcı sisteme giriş yapabilir.</FormDescription>
+                    <FormLabel>{t('users.active_user')}</FormLabel>
+                    <FormDescription>{t('users.active_user_description')}</FormDescription>
                   </div>
                 </FormItem>
               )} />
 
               <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
                 {form.formState.isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                Kaydet
+                {t('common.save')}
               </Button>
             </form>
           </Form>

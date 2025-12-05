@@ -100,7 +100,8 @@
     "quantity": "Adet",
     "per_person": "Kişi Başı",
     "manual": "Manuel",
-    "source": "Kaynak"
+    "source": "Kaynak",
+    "currency": "Para Birimi"
   },
   "nav": {
     "dashboard": "Kontrol Paneli",
@@ -191,7 +192,13 @@
     "timeline": "Okul Zaman Çizelgesi",
     "visit_history": "Ziyaret Geçmişi",
     "offer_history": "Teklif Geçmişi",
-    "sale_history": "Satış Geçmişi"
+    "sale_history": "Satış Geçmişi",
+    "latitude": "Enlem (Latitude)",
+    "longitude": "Boylam (Longitude)",
+    "select_city": "Şehir Seçiniz",
+    "select_district": "İlçe Seçiniz",
+    "select_region": "Bölge Seçiniz",
+    "loading": "Yükleniyor..."
   },
   "visits": {
     "title": "Ziyaret Listesi",
@@ -459,6 +466,15 @@
     "last_login": "Son Giriş",
     "success_add": "Kullanıcı başarıyla oluşturuldu",
     "success_update": "Kullanıcı başarıyla güncellendi",
+    "form_title": "Kullanıcı Bilgileri",
+    "full_name": "Ad Soyad",
+    "select_team": "Takım Seçiniz",
+    "region_placeholder": "Örn: Marmara",
+    "region_description": "Satış personelinin sorumlu olduğu ana bölge.",
+    "assigned_districts": "Sorumlu Olduğu İlçeler (Harita Raporu İçin)",
+    "districts_description": "Birden fazla seçim yapabilirsiniz.",
+    "active_user": "Aktif Kullanıcı",
+    "active_user_description": "Bu kullanıcı sisteme giriş yapabilir.",
     "success_delete": "Kullanıcı başarıyla silindi",
     "no_users": "Henüz kullanıcı bulunmuyor",
     "search_placeholder": "Ad veya e-posta ara..."
@@ -486,8 +502,12 @@
     "tour_name": "Tur Adı",
     "destination": "Destinasyon",
     "duration": "Süre",
-    "duration_days": "{{days}} Gün",
+    "duration_days": "Süre (Gün)",
     "base_price": "Taban Fiyat",
+    "default_price": "Varsayılan Fiyat (Kişi Başı)",
+    "form_title": "Tur Detayları",
+    "tour_name_placeholder": "Örn: Ankara-Çanakkale Turu",
+    "description_placeholder": "Tur içeriği hakkında kısa bilgi...",
     "includes": "Dahil Olanlar",
     "excludes": "Dahil Olmayanlar",
     "itinerary": "Program",

@@ -100,7 +100,8 @@
     "quantity": "Quantity",
     "per_person": "Per Person",
     "manual": "Manual",
-    "source": "Source"
+    "source": "Source",
+    "currency": "Currency"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -191,7 +192,13 @@
     "timeline": "School Timeline",
     "visit_history": "Visit History",
     "offer_history": "Offer History",
-    "sale_history": "Sale History"
+    "sale_history": "Sale History",
+    "latitude": "Latitude",
+    "longitude": "Longitude",
+    "select_city": "Select City",
+    "select_district": "Select District",
+    "select_region": "Select Region",
+    "loading": "Loading..."
   },
   "visits": {
     "title": "Visits List",

@@ -14,11 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const schoolSchema = z.object({
-  name: z.string().min(3, "Name is required"),
-  city: z.string().min(2, "City is required"),
-  district: z.string().min(2, "District is required"),
-  contact_person: z.string().min(3, "Contact person is required"),
-  contact_phone: z.string().min(10, "Valid phone number is required"),
+  name: z.string().min(3, "Okul adı zorunludur"),
+  city: z.string().min(2, "Şehir zorunludur"),
+  district: z.string().min(2, "İlçe zorunludur"),
+  contact_person: z.string().min(3, "İletişim kişisi zorunludur"),
+  contact_phone: z.string().min(10, "Geçerli telefon numarası giriniz"),
   region: z.string().optional(),
   latitude: z.coerce.number().optional(),
   longitude: z.coerce.number().optional(),
@@ -75,13 +75,13 @@ export default function SchoolForm() {
       await api.schools.create(values);
       toast({
         title: t('schools.success_add'),
-        description: `${values.name} has been added to the system.`,
+        description: t('schools.success_add'),
       });
       navigate('/schools');
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to create school. Please try again.",
+        title: t('common.error'),
+        description: t('errors.generic'),
         variant: "destructive"
       });
     }
@@ -104,7 +104,7 @@ export default function SchoolForm() {
       <Card className="border-border/50 shadow-md">
         <CardHeader>
           <CardTitle>{t('schools.form_title')}</CardTitle>
-          <CardDescription>Enter the details of the new school below.</CardDescription>
+          <CardDescription>{t('schools.form_subtitle')}</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -133,7 +133,7 @@ export default function SchoolForm() {
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select City" />
+                            <SelectValue placeholder={t('schools.select_city')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -156,7 +156,7 @@ export default function SchoolForm() {
                       <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedCity}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select District" />
+                            <SelectValue placeholder={t('schools.select_district')} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -177,9 +177,9 @@ export default function SchoolForm() {
                     name="region"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Bölge</FormLabel>
+                        <FormLabel>{t('common.region')}</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue placeholder="Bölge Seç" /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger><SelectValue placeholder={t('schools.select_region')} /></SelectTrigger></FormControl>
                             <SelectContent>
                                 {REGIONS.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                             </SelectContent>
@@ -192,10 +192,10 @@ export default function SchoolForm() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                  <FormField control={form.control} name="latitude" render={({ field }) => (
-                    <FormItem><FormLabel>Enlem (Latitude)</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('schools.latitude')}</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
                  )} />
                  <FormField control={form.control} name="longitude" render={({ field }) => (
-                    <FormItem><FormLabel>Boylam (Longitude)</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel>{t('schools.longitude')}</FormLabel><FormControl><Input type="number" step="any" {...field} /></FormControl><FormMessage /></FormItem>
                  )} />
               </div>
 
